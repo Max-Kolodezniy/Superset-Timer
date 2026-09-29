@@ -68,7 +68,111 @@
 </section>
 
 <script>
-// Business logic added in later tasks.
+let state = null; // null = idle/config screen; otherwise the active session
+
+const configScreen = document.getElementById('configScreen');
+const sessionScreen = document.getElementById('sessionScreen');
+const phaseLabel = document.getElementById('phaseLabel');
+const timerDisplay = document.getElementById('timerDisplay');
+const mainBtn = document.getElementById('mainBtn');
+const finishBtn = document.getElementById('finishBtn');
+
+function fmtMMSS(totalSeconds) {
+  const neg = totalSeconds < 0;
+  const abs = Math.round(Math.abs(totalSeconds));
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const str = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  return neg ? '-' + str : str;
+}
+
+function isLastExerciseInSuperset() {
+  return state.exerciseIndex === state.config.exercisesPerSuperset;
+}
+
+function isAtFinalRest() {
+  return state.phase === 'rest'
+    && state.supersetIndex === state.config.supersets
+    && state.exerciseIndex === state.config.exercisesPerSuperset;
+}
+
+function render() {
+  if (!state) {
+    configScreen.hidden = false;
+    sessionScreen.hidden = true;
+    return;
+  }
+  configScreen.hidden = true;
+  sessionScreen.hidden = false;
+
+  const now = Date.now();
+  const elapsedSec = (now - state.phaseStartEpoch) / 1000;
+
+  if (state.phase === 'exercise') {
+    phaseLabel.textContent = 'S' + state.supersetIndex + ' E' + state.exerciseIndex;
+    timerDisplay.textContent = fmtMMSS(elapsedSec);
+    mainBtn.textContent = 'Rest';
+    mainBtn.disabled = false;
+  } else {
+    phaseLabel.textContent = 'Rest';
+    timerDisplay.textContent = fmtMMSS(state.currentRestDefault - elapsedSec);
+    mainBtn.textContent = 'Next';
+    mainBtn.disabled = isAtFinalRest();
+  }
+}
+
+function onStart() {
+  const supersets = parseInt(document.getElementById('supersetsInput').value, 10);
+  const exercisesPerSuperset = parseInt(document.getElementById('exercisesInput').value, 10);
+  const restExercise = parseInt(document.getElementById('restExerciseInput').value, 10);
+  const restSuperset = parseInt(document.getElementById('restSupersetInput').value, 10);
+
+  const now = Date.now();
+  state = {
+    config: { supersets, exercisesPerSuperset, restExercise, restSuperset },
+    supersetIndex: 1,
+    exerciseIndex: 1,
+    phase: 'exercise',
+    phaseStartEpoch: now,
+    sessionStartEpoch: now,
+    currentRestDefault: restExercise,
+    entries: [],
+  };
+  render();
+}
+
+function onMainBtn() {
+  const now = Date.now();
+  const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
+
+  if (state.phase === 'exercise') {
+    state.entries.push({ label: 'S' + state.supersetIndex + ' E' + state.exerciseIndex, seconds: elapsedSec });
+    state.currentRestDefault = isLastExerciseInSuperset() ? state.config.restSuperset : state.config.restExercise;
+    state.phase = 'rest';
+    state.phaseStartEpoch = now;
+  } else {
+    state.entries.push({ label: 'Rest', seconds: elapsedSec });
+    if (isLastExerciseInSuperset()) {
+      state.supersetIndex += 1;
+      state.exerciseIndex = 1;
+    } else {
+      state.exerciseIndex += 1;
+    }
+    state.phase = 'exercise';
+    state.phaseStartEpoch = now;
+  }
+  render();
+}
+
+document.getElementById('startBtn').addEventListener('click', onStart);
+mainBtn.addEventListener('click', onMainBtn);
+
+function tick() {
+  if (state) render();
+}
+setInterval(tick, 1000);
+
+render();
 </script>
 </body>
 </html>
