@@ -9,7 +9,7 @@
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, system-ui, sans-serif;
-    background: #111; color: #eee;
+    background: #000; color: #eee;
     margin: 0; padding: 16px;
     max-width: 480px; margin-inline: auto;
   }
@@ -28,7 +28,8 @@
   #finishBtn { background: #b33; color: white; }
   #mainBtn:disabled { background: #444; color: #888; }
   #phaseLabel { font-size: 1.4rem; text-align: center; margin-bottom: 8px; }
-  #timerDisplay { font-size: 3.5rem; text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 8px; }
+  #timerDisplay { font-size: 3.5rem; text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 8px; padding: 8px; border-radius: 12px; }
+  #timerDisplay.overtime { background: #b33; color: white; }
   .log-entry { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
   .log-entry pre { white-space: pre-wrap; font-size: 0.85rem; margin: 0 0 8px; }
   .log-entry button { background: #333; color: #eee; padding: 8px; font-size: 0.9rem; margin-top: 0; }
@@ -138,11 +139,14 @@ function render() {
   if (state.phase === 'exercise') {
     phaseLabel.textContent = 'S' + state.supersetIndex + ' E' + state.exerciseIndex;
     timerDisplay.textContent = fmtMMSS(elapsedSec);
+    timerDisplay.classList.remove('overtime');
     mainBtn.textContent = 'Rest';
     mainBtn.disabled = false;
   } else {
+    const remaining = state.currentRestDefault - elapsedSec;
     phaseLabel.textContent = 'Rest';
-    timerDisplay.textContent = fmtMMSS(state.currentRestDefault - elapsedSec);
+    timerDisplay.textContent = fmtMMSS(remaining);
+    timerDisplay.classList.toggle('overtime', remaining < 0);
     mainBtn.textContent = 'Next';
     mainBtn.disabled = isAtFinalRest();
   }
