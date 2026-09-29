@@ -26,6 +26,7 @@
   }
   #startBtn, #mainBtn { background: #2d6cdf; color: white; }
   #finishBtn { background: #b33; color: white; }
+  #cancelBtn { background: #333; color: #ccc; }
   #mainBtn:disabled { background: #444; color: #888; }
   #phaseLabel { font-size: 1.4rem; text-align: center; margin-bottom: 8px; }
   #timerDisplay { font-size: 3.5rem; text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 8px; padding: 8px; border-radius: 12px; }
@@ -61,6 +62,7 @@
   <div id="timerDisplay">00:00</div>
   <button id="mainBtn">Rest</button>
   <button id="finishBtn">Finish</button>
+  <button id="cancelBtn">Cancel</button>
   <div id="wakeLockStatus" style="text-align:center; font-size:0.8rem; opacity:0.6; margin-top:8px;"></div>
 </section>
 
@@ -319,6 +321,15 @@ function onFinish() {
 }
 
 finishBtn.addEventListener('click', onFinish);
+
+function onCancel() {
+  state = null;
+  releaseWakeLock();
+  saveState();
+  render();
+}
+
+document.getElementById('cancelBtn').addEventListener('click', onCancel);
 
 state = loadState();
 logHistory = loadLog();
