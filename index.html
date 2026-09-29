@@ -156,6 +156,7 @@ function onStart() {
     entries: [],
   };
   saveState();
+  requestWakeLock();
   render();
 }
 
@@ -215,10 +216,55 @@ function renderLog() {
     div.className = 'log-entry';
     const pre = document.createElement('pre');
     pre.textContent = buildLogText(session);
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', () => copyEntry(i));
     div.appendChild(pre);
+    div.appendChild(copyBtn);
     logList.appendChild(div);
   });
 }
+
+function copyEntry(index) {
+  navigator.clipboard.writeText(buildLogText(logHistory[index]));
+}
+
+function buildExportText() {
+  return logHistory.map(buildLogText).join('\n\n---\n\n');
+}
+
+function onExport() {
+  const blob = new Blob([buildExportText()], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'timer-log.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('exportBtn').addEventListener('click', onExport);
+
+let wakeLock = null;
+
+async function requestWakeLock() {
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+  } catch (e) {
+    // Wake Lock unsupported or denied — no-op, workout still works.
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state) requestWakeLock();
+});
 
 function onFinish() {
   const now = Date.now();
@@ -232,6 +278,7 @@ function onFinish() {
   saveLog();
 
   state = null;
+  releaseWakeLock();
   saveState();
   render();
   renderLog();
