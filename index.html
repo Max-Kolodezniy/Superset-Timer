@@ -60,6 +60,7 @@
   <div id="timerDisplay">00:00</div>
   <button id="mainBtn">Rest</button>
   <button id="finishBtn">Finish</button>
+  <div id="wakeLockStatus" style="text-align:center; font-size:0.8rem; opacity:0.6; margin-top:8px;"></div>
 </section>
 
 <section id="logScreen">
@@ -103,6 +104,15 @@ function fmtMMSS(totalSeconds) {
   return neg ? '-' + str : str;
 }
 
+function parseCount(value, fallback) {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n >= 1 ? n : fallback;
+}
+function parseRestSeconds(value, fallback) {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
 function isLastExerciseInSuperset() {
   return state.exerciseIndex === state.config.exercisesPerSuperset;
 }
@@ -139,10 +149,10 @@ function render() {
 }
 
 function onStart() {
-  const supersets = parseInt(document.getElementById('supersetsInput').value, 10);
-  const exercisesPerSuperset = parseInt(document.getElementById('exercisesInput').value, 10);
-  const restExercise = parseInt(document.getElementById('restExerciseInput').value, 10);
-  const restSuperset = parseInt(document.getElementById('restSupersetInput').value, 10);
+  const supersets = parseCount(document.getElementById('supersetsInput').value, 3);
+  const exercisesPerSuperset = parseCount(document.getElementById('exercisesInput').value, 6);
+  const restExercise = parseRestSeconds(document.getElementById('restExerciseInput').value, 60);
+  const restSuperset = parseRestSeconds(document.getElementById('restSupersetInput').value, 180);
 
   const now = Date.now();
   state = {
@@ -218,15 +228,18 @@ function renderLog() {
     pre.textContent = buildLogText(session);
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy';
-    copyBtn.addEventListener('click', () => copyEntry(i));
+    copyBtn.addEventListener('click', () => copyEntry(i, copyBtn));
     div.appendChild(pre);
     div.appendChild(copyBtn);
     logList.appendChild(div);
   });
 }
 
-function copyEntry(index) {
-  navigator.clipboard.writeText(buildLogText(logHistory[index]));
+function copyEntry(index, btn) {
+  navigator.clipboard.writeText(buildLogText(logHistory[index])).then(
+    () => { if (btn) { const orig = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = orig; }, 1500); } },
+    () => { if (btn) { const orig = btn.textContent; btn.textContent = 'Copy failed'; setTimeout(() => { btn.textContent = orig; }, 1500); } }
+  );
 }
 
 function buildExportText() {
@@ -248,10 +261,13 @@ document.getElementById('exportBtn').addEventListener('click', onExport);
 let wakeLock = null;
 
 async function requestWakeLock() {
+  const statusEl = document.getElementById('wakeLockStatus');
   try {
     wakeLock = await navigator.wakeLock.request('screen');
+    if (statusEl) statusEl.textContent = 'Screen: kept on';
   } catch (e) {
-    // Wake Lock unsupported or denied — no-op, workout still works.
+    // Wake Lock unsupported or denied — workout still works, just show the user why.
+    if (statusEl) statusEl.textContent = 'Screen: may sleep (wake lock unavailable)';
   }
 }
 
@@ -260,10 +276,19 @@ function releaseWakeLock() {
     wakeLock.release();
     wakeLock = null;
   }
+  const statusEl = document.getElementById('wakeLockStatus');
+  if (statusEl) statusEl.textContent = '';
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && state) requestWakeLock();
+});
+
+window.addEventListener('storage', () => {
+  state = loadState();
+  logHistory = loadLog();
+  render();
+  renderLog();
 });
 
 function onFinish() {
@@ -288,6 +313,7 @@ finishBtn.addEventListener('click', onFinish);
 
 state = loadState();
 logHistory = loadLog();
+if (state) requestWakeLock();
 render();
 renderLog();
 </script>
