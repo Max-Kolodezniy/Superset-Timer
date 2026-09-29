@@ -29,11 +29,22 @@
   #finishBtn { background: #b33; color: white; }
   #cancelBtn { background: #333; color: #ccc; }
   #mainBtn:disabled { background: #444; color: #888; }
-  .config-grid, .timer-block { min-height: 150px; }
+  .config-grid, .timer-block { min-height: 280px; }
   .timer-block { display: flex; flex-direction: column; justify-content: center; }
   #phaseLabel { font-size: 1.4rem; text-align: center; margin-bottom: 8px; }
-  #timerDisplay { font-size: 3.5rem; text-align: center; font-variant-numeric: tabular-nums; margin-bottom: 8px; padding: 8px; border-radius: 12px; }
+  #timerDisplay {
+    position: relative; overflow: hidden;
+    font-size: 7rem; text-align: center; font-variant-numeric: tabular-nums;
+    margin-bottom: 8px; padding: 8px; border-radius: 12px;
+  }
   #timerDisplay.overtime { background: #b33; color: white; }
+  #timerBar {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 0%;
+    background: rgba(70, 110, 180, 0.5);
+    transition: width 1s linear, background-color 1s linear;
+    z-index: 0;
+  }
+  #timerText { position: relative; z-index: 1; }
   .log-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #2a2a2a; padding: 12px; border-radius: 8px; }
   .log-section-header h2 { font-size: 1.1rem; margin: 0; opacity: 0.9; }
   .log-section-header button { width: auto; margin-top: 0; padding: 6px 12px; font-size: 0.85rem; background: #1a1a1a; color: #ccc; }
@@ -78,7 +89,10 @@
 <section id="sessionScreen" hidden>
   <div class="timer-block">
     <div id="phaseLabel"></div>
-    <div id="timerDisplay">00:00</div>
+    <div id="timerDisplay">
+      <div id="timerBar"></div>
+      <span id="timerText">00:00</span>
+    </div>
   </div>
   <button id="mainBtn">Rest</button>
   <button id="finishBtn">Finish</button>
@@ -118,6 +132,8 @@ const configScreen = document.getElementById('configScreen');
 const sessionScreen = document.getElementById('sessionScreen');
 const phaseLabel = document.getElementById('phaseLabel');
 const timerDisplay = document.getElementById('timerDisplay');
+const timerBar = document.getElementById('timerBar');
+const timerText = document.getElementById('timerText');
 const mainBtn = document.getElementById('mainBtn');
 const finishBtn = document.getElementById('finishBtn');
 
@@ -137,6 +153,21 @@ function parseCount(value, fallback) {
 function parseRestSeconds(value, fallback) {
   const n = parseInt(value, 10);
   return Number.isFinite(n) && n >= 0 ? n : fallback;
+}
+
+function restBarColor(remaining, restDefault) {
+  const half = restDefault / 2;
+  const blue = [70, 110, 180];
+  const red = [179, 51, 51];
+  let t;
+  if (remaining >= half) t = 0;
+  else if (remaining <= 10) t = 1;
+  else t = (half - remaining) / Math.max(half - 10, 1);
+  t = Math.max(0, Math.min(t, 1));
+  const r = Math.round(blue[0] + (red[0] - blue[0]) * t);
+  const g = Math.round(blue[1] + (red[1] - blue[1]) * t);
+  const b = Math.round(blue[2] + (red[2] - blue[2]) * t);
+  return 'rgba(' + r + ',' + g + ',' + b + ',0.55)';
 }
 
 function isLastExerciseInSuperset() {
@@ -163,15 +194,19 @@ function render() {
 
   if (state.phase === 'exercise') {
     phaseLabel.textContent = 'S' + state.supersetIndex + ' E' + state.exerciseIndex;
-    timerDisplay.textContent = fmtMMSS(elapsedSec);
+    timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
+    timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
+    timerBar.style.background = 'rgba(70, 110, 180, 0.5)';
     mainBtn.textContent = 'Rest';
     mainBtn.disabled = false;
   } else {
     const remaining = state.currentRestDefault - elapsedSec;
     phaseLabel.textContent = 'Rest';
-    timerDisplay.textContent = fmtMMSS(remaining);
+    timerText.textContent = fmtMMSS(remaining);
     timerDisplay.classList.toggle('overtime', remaining < 0);
+    timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
+    timerBar.style.background = restBarColor(remaining, state.currentRestDefault);
     mainBtn.textContent = 'Next';
     mainBtn.disabled = isAtFinalRest();
   }
