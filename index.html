@@ -69,6 +69,23 @@
 
 <script>
 let state = null; // null = idle/config screen; otherwise the active session
+let logHistory = []; // finished sessions; persisted starting Task 4
+
+function saveState() {
+  if (state) localStorage.setItem('timer.session', JSON.stringify(state));
+  else localStorage.removeItem('timer.session');
+}
+function loadState() {
+  const raw = localStorage.getItem('timer.session');
+  return raw ? JSON.parse(raw) : null;
+}
+function saveLog() {
+  localStorage.setItem('timer.log', JSON.stringify(logHistory));
+}
+function loadLog() {
+  const raw = localStorage.getItem('timer.log');
+  return raw ? JSON.parse(raw) : [];
+}
 
 const configScreen = document.getElementById('configScreen');
 const sessionScreen = document.getElementById('sessionScreen');
@@ -138,6 +155,7 @@ function onStart() {
     currentRestDefault: restExercise,
     entries: [],
   };
+  saveState();
   render();
 }
 
@@ -161,6 +179,7 @@ function onMainBtn() {
     state.phase = 'exercise';
     state.phaseStartEpoch = now;
   }
+  saveState();
   render();
 }
 
@@ -171,8 +190,6 @@ function tick() {
   if (state) render();
 }
 setInterval(tick, 1000);
-
-let logHistory = []; // finished sessions; persisted starting Task 4
 
 function formatDate(date) {
   const y = date.getFullYear();
@@ -212,14 +229,18 @@ function onFinish() {
   state.entries.push({ label, seconds: elapsedSec });
 
   logHistory.unshift({ dateStr: formatDate(new Date(state.sessionStartEpoch)), entries: state.entries });
-  renderLog();
+  saveLog();
 
   state = null;
+  saveState();
   render();
+  renderLog();
 }
 
 finishBtn.addEventListener('click', onFinish);
 
+state = loadState();
+logHistory = loadLog();
 render();
 renderLog();
 </script>
