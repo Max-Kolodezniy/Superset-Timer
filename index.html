@@ -284,11 +284,16 @@ document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && state) requestWakeLock();
 });
 
-window.addEventListener('storage', () => {
-  state = loadState();
-  logHistory = loadLog();
-  render();
-  renderLog();
+window.addEventListener('storage', (event) => {
+  if (event.key === 'timer.log') {
+    logHistory = loadLog();
+    renderLog();
+  } else if (event.key === 'timer.session') {
+    if (!state) {
+      state = loadState();
+      render();
+    }
+  }
 });
 
 function onFinish() {
