@@ -172,7 +172,56 @@ function tick() {
 }
 setInterval(tick, 1000);
 
+let logHistory = []; // finished sessions; persisted starting Task 4
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + d;
+}
+
+function buildLogText(session) {
+  const totalE = session.entries.filter(e => e.label !== 'Rest').reduce((s, e) => s + e.seconds, 0);
+  const totalR = session.entries.filter(e => e.label === 'Rest').reduce((s, e) => s + e.seconds, 0);
+  const header = session.dateStr + ' - ' + fmtMMSS(totalE + totalR) +
+    ' (E: ' + fmtMMSS(totalE) + ', R: ' + fmtMMSS(totalR) + ')';
+  const lines = session.entries.map(e => e.label + ' - ' + fmtMMSS(e.seconds));
+  return header + '\n' + lines.join('\n');
+}
+
+function renderLog() {
+  const logList = document.getElementById('logList');
+  logList.innerHTML = '';
+  logHistory.forEach((session, i) => {
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    const pre = document.createElement('pre');
+    pre.textContent = buildLogText(session);
+    div.appendChild(pre);
+    logList.appendChild(div);
+  });
+}
+
+function onFinish() {
+  const now = Date.now();
+  const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
+  const label = state.phase === 'exercise'
+    ? 'S' + state.supersetIndex + ' E' + state.exerciseIndex
+    : 'Rest';
+  state.entries.push({ label, seconds: elapsedSec });
+
+  logHistory.unshift({ dateStr: formatDate(new Date(state.sessionStartEpoch)), entries: state.entries });
+  renderLog();
+
+  state = null;
+  render();
+}
+
+finishBtn.addEventListener('click', onFinish);
+
 render();
+renderLog();
 </script>
 </body>
 </html>
