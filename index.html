@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Superset Timer</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -604,6 +608,8 @@ document.querySelectorAll('.config-grid input').forEach((input) => {
     adjustInputValue(input, e.deltaY < 0 ? step : -step);
   }, { passive: false });
 });
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
 loadConfig();
 state = loadState();
