@@ -53,7 +53,7 @@
   }
   .config-grid, .timer-block { min-height: 220px; }
   .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
-  #phaseLabel { font-size: 1.4rem; text-align: center; margin-bottom: 4px; }
+  #phaseLabel { font-size: 2rem; text-align: center; margin-bottom: 4px; }
   #timerDisplay {
     position: relative; overflow: hidden;
     font-size: clamp(2.5rem, 28cqw, 7rem); text-align: center; font-variant-numeric: tabular-nums;
@@ -238,6 +238,12 @@ function restBarColor(remaining, restDefault) {
   return 'rgba(' + r + ',' + g + ',' + b + ',0.55)';
 }
 
+function exerciseLabel(supersetIndex, exerciseIndex) {
+  const names = state && state.config && state.config.exerciseNames;
+  const name = names && names[exerciseIndex - 1];
+  return 'S' + supersetIndex + ' - ' + (name || ('E' + exerciseIndex));
+}
+
 function isLastExerciseInSuperset() {
   return state.exerciseIndex === state.config.exercisesPerSuperset;
 }
@@ -260,7 +266,7 @@ function render() {
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
 
   if (state.phase === 'exercise') {
-    phaseLabel.textContent = 'S' + state.supersetIndex + ' E' + state.exerciseIndex;
+    phaseLabel.textContent = exerciseLabel(state.supersetIndex, state.exerciseIndex);
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
@@ -287,7 +293,7 @@ function onStart() {
 
   const now = Date.now();
   state = {
-    config: { supersets, exercisesPerSuperset, restExercise, restSuperset },
+    config: { supersets, exercisesPerSuperset, restExercise, restSuperset, exerciseNames: queryExerciseNames },
     supersetIndex: 1,
     exerciseIndex: 1,
     phase: 'exercise',
@@ -306,7 +312,7 @@ function onMainBtn() {
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
 
   if (state.phase === 'exercise') {
-    state.entries.push({ label: 'S' + state.supersetIndex + ' E' + state.exerciseIndex, seconds: elapsedSec });
+    state.entries.push({ label: exerciseLabel(state.supersetIndex, state.exerciseIndex), seconds: elapsedSec });
     state.currentRestDefault = isLastExerciseInSuperset() ? state.config.restSuperset : state.config.restExercise;
     state.phase = 'rest';
     state.phaseStartEpoch = now;
@@ -358,7 +364,15 @@ function buildSessionHeaderLines(session) {
 }
 
 function buildSessionBody(session) {
-  return session.entries.map(e => e.label + ' - ' + fmtMMSS(e.seconds)).join('\n');
+  let prevLabelLen = 0;
+  return session.entries.map((e) => {
+    if (e.label === 'Rest') {
+      const label = prevLabelLen > 'Rest'.length ? 'Rest'.padStart(prevLabelLen) : 'Rest';
+      return label + ' - ' + fmtMMSS(e.seconds);
+    }
+    prevLabelLen = e.label.length;
+    return e.label + ' - ' + fmtMMSS(e.seconds);
+  }).join('\n');
 }
 
 function buildLogText(session) {
@@ -549,7 +563,7 @@ function onFinish() {
   const now = Date.now();
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
   const label = state.phase === 'exercise'
-    ? 'S' + state.supersetIndex + ' E' + state.exerciseIndex
+    ? exerciseLabel(state.supersetIndex, state.exerciseIndex)
     : 'Rest';
   const entry = { label, seconds: elapsedSec };
   if (state.phase === 'rest') entry.target = state.currentRestDefault;
@@ -611,7 +625,18 @@ document.querySelectorAll('.config-grid input').forEach((input) => {
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
+let queryExerciseNames = null;
+function applyQueryExercises() {
+  const names = new URLSearchParams(window.location.search).getAll('exercises');
+  if (!names.length) return;
+  const exercisesInput = document.getElementById('exercisesInput');
+  const max = parseInt(exercisesInput.max, 10);
+  queryExerciseNames = names.slice(0, max);
+  exercisesInput.value = queryExerciseNames.length;
+}
+
 loadConfig();
+applyQueryExercises();
 state = loadState();
 logHistory = loadLog();
 if (state) requestWakeLock();
