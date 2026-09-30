@@ -64,7 +64,8 @@
   .log-timeline { display: flex; width: 100%; height: 10px; }
   .log-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
-  .log-header-actions button:last-child { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
+  button.icon-btn-danger { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
+  .log-section-actions { display: flex; gap: 8px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -112,7 +113,10 @@
 <section id="logScreen">
   <div class="log-section-header">
     <h2>Log</h2>
-    <button id="exportBtn">Export as .md</button>
+    <div class="log-section-actions">
+      <button id="exportBtn">Export as .md</button>
+      <button id="clearLogBtn" class="icon-btn-danger" aria-label="Clear log">🧹</button>
+    </div>
   </div>
   <div id="logList"></div>
 </section>
@@ -385,6 +389,7 @@ function renderLog() {
     copyBtn.addEventListener('click', (e) => { e.stopPropagation(); copyEntry(i, copyBtn); });
 
     const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'icon-btn-danger';
     deleteBtn.textContent = '🗑️';
     deleteBtn.setAttribute('aria-label', 'Delete');
     deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteEntry(i); });
@@ -446,6 +451,15 @@ function onExport() {
 }
 
 document.getElementById('exportBtn').addEventListener('click', onExport);
+
+function onClearLog() {
+  if (!confirm('Clear the entire log? This deletes all ' + logHistory.length + ' entries.')) return;
+  logHistory = [];
+  saveLog();
+  renderLog();
+}
+
+document.getElementById('clearLogBtn').addEventListener('click', onClearLog);
 
 let wakeLock = null;
 
