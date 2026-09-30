@@ -132,6 +132,23 @@ function loadState() {
 function saveLog() {
   localStorage.setItem('timer.log', JSON.stringify(logHistory));
 }
+function saveConfig() {
+  localStorage.setItem('timer.config', JSON.stringify({
+    supersets: document.getElementById('supersetsInput').value,
+    exercisesPerSuperset: document.getElementById('exercisesInput').value,
+    restExercise: document.getElementById('restExerciseInput').value,
+    restSuperset: document.getElementById('restSupersetInput').value,
+  }));
+}
+function loadConfig() {
+  const raw = localStorage.getItem('timer.config');
+  if (!raw) return;
+  const config = JSON.parse(raw);
+  document.getElementById('supersetsInput').value = config.supersets;
+  document.getElementById('exercisesInput').value = config.exercisesPerSuperset;
+  document.getElementById('restExerciseInput').value = config.restExercise;
+  document.getElementById('restSupersetInput').value = config.restSuperset;
+}
 function loadLog() {
   const raw = localStorage.getItem('timer.log');
   return raw ? JSON.parse(raw) : [];
@@ -502,6 +519,11 @@ function onCancel() {
 
 document.getElementById('cancelBtn').addEventListener('click', onCancel);
 
+document.querySelectorAll('.config-grid input').forEach((input) => {
+  input.addEventListener('input', saveConfig);
+});
+
+loadConfig();
 state = loadState();
 logHistory = loadLog();
 if (state) requestWakeLock();
