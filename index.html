@@ -33,7 +33,6 @@
     background: none; color: #888; font-size: 0.85rem;
     text-decoration: underline; border-radius: 0;
   }
-  #mainBtn:disabled { background: #444; color: #888; }
   .config-grid, .timer-block { min-height: 220px; }
   .timer-block { display: flex; flex-direction: column; justify-content: center; }
   #phaseLabel { font-size: 1.4rem; text-align: center; margin-bottom: 4px; }
@@ -179,9 +178,8 @@ function isLastExerciseInSuperset() {
   return state.exerciseIndex === state.config.exercisesPerSuperset;
 }
 
-function isAtFinalRest() {
-  return state.phase === 'rest'
-    && state.supersetIndex === state.config.supersets
+function isLastActionOfWorkout() {
+  return state.supersetIndex === state.config.supersets
     && state.exerciseIndex === state.config.exercisesPerSuperset;
 }
 
@@ -203,8 +201,8 @@ function render() {
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
     timerBar.style.background = 'rgba(70, 110, 180, 0.5)';
+    mainBtn.hidden = isLastActionOfWorkout();
     mainBtn.textContent = 'Rest';
-    mainBtn.disabled = false;
   } else {
     const remaining = state.currentRestDefault - elapsedSec;
     phaseLabel.textContent = 'Rest';
@@ -212,8 +210,8 @@ function render() {
     timerDisplay.classList.toggle('overtime', remaining < 0);
     timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
     timerBar.style.background = restBarColor(remaining, state.currentRestDefault);
+    mainBtn.hidden = isLastActionOfWorkout();
     mainBtn.textContent = 'Next';
-    mainBtn.disabled = isAtFinalRest();
   }
 }
 
