@@ -364,20 +364,25 @@ function buildSessionHeaderLines(session) {
 }
 
 function buildSessionBody(session) {
-  let prevLabelLen = 0;
-  return session.entries.map((e) => {
+  const rows = [];
+  session.entries.forEach((e) => {
     if (e.label === 'Rest') {
-      const label = prevLabelLen > 'Rest'.length ? 'Rest'.padStart(prevLabelLen) : 'Rest';
-      return label + ' - ' + fmtMMSS(e.seconds);
+      if (rows.length) rows[rows.length - 1].rest = fmtMMSS(e.seconds);
+      return;
     }
-    prevLabelLen = e.label.length;
-    return e.label + ' - ' + fmtMMSS(e.seconds);
-  }).join('\n');
+    const sepIdx = e.label.indexOf(' - ');
+    const superset = sepIdx >= 0 ? e.label.slice(0, sepIdx) : e.label;
+    const exercise = sepIdx >= 0 ? e.label.slice(sepIdx + 3) : '';
+    rows.push({ superset, exercise, time: fmtMMSS(e.seconds), rest: '' });
+  });
+  const header = '| S# | Exercise | Time (mm:ss) | Rest (mm:ss) |\n|---|---|---|---|';
+  const body = rows.map(r => `| ${r.superset} | ${r.exercise} | ${r.time} | ${r.rest} |`).join('\n');
+  return header + '\n' + body;
 }
 
 function buildLogText(session) {
   const { line1, line2 } = buildSessionHeaderLines(session);
-  return line1 + '\n' + line2 + '\n\n```\n' + buildSessionBody(session) + '\n```';
+  return line1 + '\n' + line2 + '\n\n' + buildSessionBody(session);
 }
 
 const TIMELINE_COLORS = {
