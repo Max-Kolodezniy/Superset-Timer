@@ -13,7 +13,9 @@
     margin: 0; padding: 16px;
     max-width: 480px; margin-inline: auto;
   }
-  h1 { font-size: 1.1rem; opacity: 0.7; margin: 0 0 16px; }
+  .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  h1 { font-size: 1.1rem; opacity: 0.7; margin: 0; }
+  #fullscreenBtn { width: auto; margin-top: 0; padding: 6px 10px; font-size: 1.1rem; background: #333; color: #eee; }
   section { margin-bottom: 24px; }
   label { display: block; margin: 12px 0 4px; font-size: 0.9rem; opacity: 0.8; }
   input[type="number"] {
@@ -82,7 +84,10 @@
 </head>
 <body>
 
-<h1>Superset Timer</h1>
+<div class="app-header">
+  <h1>Superset Timer</h1>
+  <button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
+</div>
 
 <section id="configScreen">
   <div class="config-grid">
@@ -508,6 +513,20 @@ function releaseWakeLock() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && state) requestWakeLock();
+});
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+}
+
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+document.addEventListener('fullscreenchange', () => {
+  document.getElementById('fullscreenBtn').textContent = document.fullscreenElement ? '✕' : '⛶';
 });
 
 window.addEventListener('storage', (event) => {
