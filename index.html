@@ -238,10 +238,12 @@ function restBarColor(remaining, restDefault) {
   return 'rgba(' + r + ',' + g + ',' + b + ',0.55)';
 }
 
-function exerciseLabel(supersetIndex, exerciseIndex) {
+function exerciseParts(supersetIndex, exerciseIndex) {
   const names = state && state.config && state.config.exerciseNames;
-  const name = names && names[exerciseIndex - 1];
-  return 'S' + supersetIndex + ' - ' + (name || ('E' + exerciseIndex));
+  const custom = names && names[exerciseIndex - 1];
+  const name = custom || ('Exercise ' + exerciseIndex);
+  const superset = 'S' + supersetIndex;
+  return { superset, name, label: superset + (custom ? ' - ' : ' ') + name };
 }
 
 function isLastExerciseInSuperset() {
@@ -266,7 +268,7 @@ function render() {
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
 
   if (state.phase === 'exercise') {
-    phaseLabel.textContent = exerciseLabel(state.supersetIndex, state.exerciseIndex);
+    phaseLabel.textContent = exerciseParts(state.supersetIndex, state.exerciseIndex).label;
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
@@ -312,7 +314,8 @@ function onMainBtn() {
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
 
   if (state.phase === 'exercise') {
-    state.entries.push({ label: exerciseLabel(state.supersetIndex, state.exerciseIndex), seconds: elapsedSec });
+    const parts = exerciseParts(state.supersetIndex, state.exerciseIndex);
+    state.entries.push({ label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name });
     state.currentRestDefault = isLastExerciseInSuperset() ? state.config.restSuperset : state.config.restExercise;
     state.phase = 'rest';
     state.phaseStartEpoch = now;
@@ -370,10 +373,7 @@ function buildSessionBody(session) {
       if (rows.length) rows[rows.length - 1].rest = fmtMMSS(e.seconds);
       return;
     }
-    const sepIdx = e.label.indexOf(' - ');
-    const superset = sepIdx >= 0 ? e.label.slice(0, sepIdx) : e.label;
-    const exercise = sepIdx >= 0 ? e.label.slice(sepIdx + 3) : '';
-    rows.push({ superset, exercise, time: fmtMMSS(e.seconds), rest: '' });
+    rows.push({ superset: e.superset, exercise: e.exercise, time: fmtMMSS(e.seconds), rest: '' });
   });
   const header = '| S# | Exercise | Time (mm:ss) | Rest (mm:ss) |\n|---|---|---|---|';
   const body = rows.map(r => `| ${r.superset} | ${r.exercise} | ${r.time} | ${r.rest} |`).join('\n');
@@ -567,10 +567,9 @@ window.addEventListener('storage', (event) => {
 function onFinish() {
   const now = Date.now();
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
-  const label = state.phase === 'exercise'
-    ? exerciseLabel(state.supersetIndex, state.exerciseIndex)
-    : 'Rest';
-  const entry = { label, seconds: elapsedSec };
+  const parts = state.phase === 'exercise' ? exerciseParts(state.supersetIndex, state.exerciseIndex) : null;
+  const entry = { label: parts ? parts.label : 'Rest', seconds: elapsedSec };
+  if (parts) { entry.superset = parts.superset; entry.exercise = parts.name; }
   if (state.phase === 'rest') entry.target = state.currentRestDefault;
   state.entries.push(entry);
 
