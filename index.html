@@ -81,7 +81,10 @@
   .log-header-line1, .log-header-actions { position: relative; z-index: 1; }
   .log-header-line1 { font-size: 0.9rem; }
   .log-header-line2 { position: relative; z-index: 1; font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
-  .log-entry pre { white-space: pre-wrap; font-size: 0.85rem; margin: 0; padding: 12px; background: #1a1a1a; }
+  .log-table-wrap { background: #1a1a1a; padding: 12px; overflow-x: auto; }
+  .log-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .log-table th, .log-table td { padding: 6px 10px; text-align: left; border: 1px solid #333; white-space: nowrap; }
+  .log-table th { color: #aaa; font-weight: normal; }
   .log-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
   button.icon-btn-danger { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
@@ -366,7 +369,7 @@ function buildSessionHeaderLines(session) {
   return { line1, line2 };
 }
 
-function buildSessionBody(session) {
+function sessionRows(session) {
   const rows = [];
   session.entries.forEach((e) => {
     if (e.label === 'Rest') {
@@ -375,9 +378,42 @@ function buildSessionBody(session) {
     }
     rows.push({ superset: e.superset, exercise: e.exercise, time: fmtMMSS(e.seconds), rest: '' });
   });
+  return rows;
+}
+
+function buildSessionBody(session) {
   const header = '| S# | Exercise | Time (mm:ss) | Rest (mm:ss) |\n|---|---|---|---|';
-  const body = rows.map(r => `| ${r.superset} | ${r.exercise} | ${r.time} | ${r.rest} |`).join('\n');
+  const body = sessionRows(session).map(r => `| ${r.superset} | ${r.exercise} | ${r.time} | ${r.rest} |`).join('\n');
   return header + '\n' + body;
+}
+
+function buildSessionTable(session) {
+  const table = document.createElement('table');
+  table.className = 'log-table';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  ['S#', 'Exercise', 'Time (mm:ss)', 'Rest (mm:ss)'].forEach((text) => {
+    const th = document.createElement('th');
+    th.textContent = text;
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+
+  const tbody = document.createElement('tbody');
+  sessionRows(session).forEach((r) => {
+    const tr = document.createElement('tr');
+    [r.superset, r.exercise, r.time, r.rest].forEach((text) => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  return table;
 }
 
 function buildLogText(session) {
@@ -462,13 +498,14 @@ function renderLog() {
     header.appendChild(headerText);
     header.appendChild(actions);
 
-    const pre = document.createElement('pre');
-    pre.textContent = buildSessionBody(session);
-    pre.hidden = true;
-    header.addEventListener('click', () => { pre.hidden = !pre.hidden; });
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'log-table-wrap';
+    tableWrap.appendChild(buildSessionTable(session));
+    tableWrap.hidden = true;
+    header.addEventListener('click', () => { tableWrap.hidden = !tableWrap.hidden; });
 
     div.appendChild(header);
-    div.appendChild(pre);
+    div.appendChild(tableWrap);
     logList.appendChild(div);
   });
 }
