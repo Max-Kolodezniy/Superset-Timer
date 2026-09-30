@@ -61,7 +61,9 @@
   .log-header-line1 { font-size: 0.9rem; }
   .log-header-line2 { font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
   .log-entry pre { white-space: pre-wrap; font-size: 0.85rem; margin: 0; padding: 12px; background: #1a1a1a; }
+  .log-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
+  .log-header-actions button:last-child { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -331,12 +333,23 @@ function renderLog() {
     headerText.appendChild(line1El);
     headerText.appendChild(line2El);
 
+    const actions = document.createElement('div');
+    actions.className = 'log-header-actions';
+
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy';
     copyBtn.addEventListener('click', (e) => { e.stopPropagation(); copyEntry(i, copyBtn); });
 
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.setAttribute('aria-label', 'Delete');
+    deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteEntry(i); });
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(deleteBtn);
+
     header.appendChild(headerText);
-    header.appendChild(copyBtn);
+    header.appendChild(actions);
 
     const pre = document.createElement('pre');
     pre.textContent = buildSessionBody(session);
@@ -354,6 +367,13 @@ function copyEntry(index, btn) {
     () => { if (btn) { const orig = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = orig; }, 1500); } },
     () => { if (btn) { const orig = btn.textContent; btn.textContent = 'Copy failed'; setTimeout(() => { btn.textContent = orig; }, 1500); } }
   );
+}
+
+function deleteEntry(index) {
+  if (!confirm('Delete this log entry?')) return;
+  logHistory.splice(index, 1);
+  saveLog();
+  renderLog();
 }
 
 function buildExportText() {
