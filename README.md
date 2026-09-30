@@ -37,7 +37,6 @@ No dependencies, no dev server required — it's one HTML file with inline CSS/J
 
 Vanilla HTML/CSS/JS, `localStorage` for persistence, CSS Container Queries for responsive timer sizing, `Screen Wake Lock API`, `navigator.clipboard`. Tested on mobile, tablet, and desktop; tablet is the primary target device.
 
-
 ## License
 
 AGPLv3 — see [LICENSE](LICENSE). Commercial use is allowed; if you run a modified version as a network service, you must make that version's source available to its users.

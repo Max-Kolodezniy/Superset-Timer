@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Superset Timer</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, system-ui, sans-serif;
+    background: #000; color: #eee;
+    margin: 0; padding: 16px;
+  }
+  #fullscreenBtn {
+    position: fixed; top: 12px; right: 12px; z-index: 10;
+    width: auto; margin-top: 0; padding: 6px 10px; font-size: 1.1rem;
+    background: #333; color: #eee; opacity: 0.85;
+  }
+  section { margin-bottom: 24px; }
+  label { display: block; margin: 12px 0 4px; font-size: 0.9rem; opacity: 0.8; }
+  input[type="number"] {
+    width: 100%; padding: 10px; font-size: 1.1rem;
+    background: #222; color: #eee; border: 1px solid #444; border-radius: 8px;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .stepper { position: relative; }
+  .stepper input[type="number"] { text-align: center; padding-left: 44px; padding-right: 44px; }
+  .stepper-btn {
+    position: absolute; top: 0; bottom: 0; width: 44px; padding: 0; margin-top: 0;
+    font-size: 1.4rem; line-height: 1; background: transparent; color: #eee; border-radius: 8px;
+  }
+  .stepper-btn-minus { left: 0; }
+  .stepper-btn-plus { right: 0; }
+  .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; align-content: center; max-width: 480px; margin-inline: auto; }
+  .config-grid label { margin-top: 10px; }
+  button {
+    width: 100%; padding: 18px; font-size: 1.3rem; margin-top: 12px;
+    border: none; border-radius: 10px; cursor: pointer;
+  }
+  #startBtn, #mainBtn { background: #2d6cdf; color: white; margin-top: 24px; }
+  #finishBtn { background: #b33; color: white; }
+  #cancelBtn {
+    display: block; width: auto; margin: 12px auto 0; padding: 4px 8px;
+    background: none; color: #888; font-size: 0.85rem;
+    text-decoration: underline; border-radius: 0;
+  }
+  .config-grid, .timer-block { min-height: 220px; }
+  .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
+  #phaseLabel { font-size: 1.4rem; text-align: center; margin-bottom: 4px; }
+  #timerDisplay {
+    position: relative; overflow: hidden;
+    font-size: clamp(2.5rem, 28cqw, 7rem); text-align: center; font-variant-numeric: tabular-nums;
+    margin-bottom: 4px; padding: 8px 16px; border-radius: 12px;
+  }
+  #timerDisplay.overtime { background: #b33; color: white; }
+  #timerBar {
+    position: absolute; top: 0; left: 0; bottom: 0; width: 0%;
+    background: rgba(70, 110, 180, 0.5);
+    transition: width 1s linear, background-color 1s linear;
+    z-index: 0;
+  }
+  #timerText { position: relative; z-index: 1; }
+  .log-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #2a2a2a; padding: 12px; border-radius: 8px; }
+  .log-section-header h2 { font-size: 1.1rem; margin: 0; opacity: 0.9; }
+  .log-section-header button { width: auto; margin-top: 0; padding: 6px 12px; font-size: 0.85rem; background: #1a1a1a; color: #ccc; }
+  .log-entry { border: 1px solid #333; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+  .log-entry .log-header {
+    position: relative; overflow: hidden;
+    background: #2a2a2a; padding: 12px; margin: 0;
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    cursor: pointer; font-size: 0.85rem;
+  }
+  .log-header-bg { position: absolute; inset: 0; display: flex; z-index: 0; }
+  .log-header-line1, .log-header-actions { position: relative; z-index: 1; }
+  .log-header-line1 { font-size: 0.9rem; }
+  .log-header-line2 { position: relative; z-index: 1; font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
+  .log-entry pre { white-space: pre-wrap; font-size: 0.85rem; margin: 0; padding: 12px; background: #1a1a1a; }
+  .log-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
+  button.icon-btn-danger { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
+  .log-section-actions { display: flex; gap: 8px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
+
+<section id="configScreen">
+  <div class="config-grid">
+    <div>
+      <label for="supersetsInput">Supersets</label>
+      <div class="stepper">
+        <button type="button" class="stepper-btn stepper-btn-minus" data-target="supersetsInput" data-delta="-1">−</button>
+        <input type="number" id="supersetsInput" value="3" min="1" max="9">
+        <button type="button" class="stepper-btn stepper-btn-plus" data-target="supersetsInput" data-delta="1">+</button>
+      </div>
+    </div>
+    <div>
+      <label for="restSupersetInput">Rest (sec)</label>
+      <div class="stepper">
+        <button type="button" class="stepper-btn stepper-btn-minus" data-target="restSupersetInput" data-delta="-10">−</button>
+        <input type="number" id="restSupersetInput" value="180" min="0" max="900" step="10">
+        <button type="button" class="stepper-btn stepper-btn-plus" data-target="restSupersetInput" data-delta="10">+</button>
+      </div>
+    </div>
+    <div>
+      <label for="exercisesInput">Exercises</label>
+      <div class="stepper">
+        <button type="button" class="stepper-btn stepper-btn-minus" data-target="exercisesInput" data-delta="-1">−</button>
+        <input type="number" id="exercisesInput" value="6" min="1" max="19">
+        <button type="button" class="stepper-btn stepper-btn-plus" data-target="exercisesInput" data-delta="1">+</button>
+      </div>
+    </div>
+    <div>
+      <label for="restExerciseInput">Rest (sec)</label>
+      <div class="stepper">
+        <button type="button" class="stepper-btn stepper-btn-minus" data-target="restExerciseInput" data-delta="-10">−</button>
+        <input type="number" id="restExerciseInput" value="60" min="0" max="900" step="10">
+        <button type="button" class="stepper-btn stepper-btn-plus" data-target="restExerciseInput" data-delta="10">+</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="startBtn">Start</button>
+</section>
+
+<section id="sessionScreen" hidden>
+  <div class="timer-block">
+    <div id="phaseLabel"></div>
+    <div id="timerDisplay">
+      <div id="timerBar"></div>
+      <span id="timerText">00:00</span>
+    </div>
+  </div>
+  <button id="mainBtn">Rest</button>
+  <button id="finishBtn">Finish</button>
+  <button id="cancelBtn">Cancel</button>
+  <div id="wakeLockStatus" style="text-align:center; font-size:0.8rem; opacity:0.6; margin-top:8px;"></div>
+</section>
+
+<section id="logScreen">
+  <div class="log-section-header">
+    <h2>Log</h2>
+    <div class="log-section-actions">
+      <button id="exportBtn">➡ .md</button>
+      <button id="clearLogBtn" class="icon-btn-danger" aria-label="Clear log">🧹</button>
+    </div>
+  </div>
+  <div id="logList"></div>
+</section>
+
+<script>
+let state = null; // null = idle/config screen; otherwise the active session
+let logHistory = []; // finished sessions; persisted starting Task 4
+
+function saveState() {
+  if (state) localStorage.setItem('timer.session', JSON.stringify(state));
+  else localStorage.removeItem('timer.session');
+}
+function loadState() {
+  const raw = localStorage.getItem('timer.session');
+  return raw ? JSON.parse(raw) : null;
+}
+function saveLog() {
+  localStorage.setItem('timer.log', JSON.stringify(logHistory));
+}
+function saveConfig() {
+  localStorage.setItem('timer.config', JSON.stringify({
+    supersets: document.getElementById('supersetsInput').value,
+    exercisesPerSuperset: document.getElementById('exercisesInput').value,
+    restExercise: document.getElementById('restExerciseInput').value,
+    restSuperset: document.getElementById('restSupersetInput').value,
+  }));
+}
+function loadConfig() {
+  const raw = localStorage.getItem('timer.config');
+  if (!raw) return;
+  const config = JSON.parse(raw);
+  document.getElementById('supersetsInput').value = config.supersets;
+  document.getElementById('exercisesInput').value = config.exercisesPerSuperset;
+  document.getElementById('restExerciseInput').value = config.restExercise;
+  document.getElementById('restSupersetInput').value = config.restSuperset;
+}
+function loadLog() {
+  const raw = localStorage.getItem('timer.log');
+  return raw ? JSON.parse(raw) : [];
+}
+
+const configScreen = document.getElementById('configScreen');
+const sessionScreen = document.getElementById('sessionScreen');
+const phaseLabel = document.getElementById('phaseLabel');
+const timerDisplay = document.getElementById('timerDisplay');
+const timerBar = document.getElementById('timerBar');
+const timerText = document.getElementById('timerText');
+const mainBtn = document.getElementById('mainBtn');
+const finishBtn = document.getElementById('finishBtn');
+
+function fmtMMSS(totalSeconds) {
+  const neg = totalSeconds < 0;
+  const abs = Math.round(Math.abs(totalSeconds));
+  const m = Math.floor(abs / 60);
+  const s = abs % 60;
+  const str = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+  return neg ? '-' + str : str;
+}
+
+function parseCount(value, fallback, max) {
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return Math.min(n, max);
+}
+function parseRestSeconds(value, fallback, max) {
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return Math.min(n, max);
+}
+
+function restBarColor(remaining, restDefault) {
+  const half = restDefault / 2;
+  const green = [80, 140, 100];
+  const red = [179, 51, 51];
+  let t;
+  if (remaining >= half) t = 0;
+  else if (remaining <= 10) t = 1;
+  else t = (half - remaining) / Math.max(half - 10, 1);
+  t = Math.max(0, Math.min(t, 1));
+  const r = Math.round(green[0] + (red[0] - green[0]) * t);
+  const g = Math.round(green[1] + (red[1] - green[1]) * t);
+  const b = Math.round(green[2] + (red[2] - green[2]) * t);
+  return 'rgba(' + r + ',' + g + ',' + b + ',0.55)';
+}
+
+function isLastExerciseInSuperset() {
+  return state.exerciseIndex === state.config.exercisesPerSuperset;
+}
+
+function isLastActionOfWorkout() {
+  return state.supersetIndex === state.config.supersets
+    && state.exerciseIndex === state.config.exercisesPerSuperset;
+}
+
+function render() {
+  if (!state) {
+    configScreen.hidden = false;
+    sessionScreen.hidden = true;
+    return;
+  }
+  configScreen.hidden = true;
+  sessionScreen.hidden = false;
+
+  const now = Date.now();
+  const elapsedSec = (now - state.phaseStartEpoch) / 1000;
+
+  if (state.phase === 'exercise') {
+    phaseLabel.textContent = 'S' + state.supersetIndex + ' E' + state.exerciseIndex;
+    timerText.textContent = fmtMMSS(elapsedSec);
+    timerDisplay.classList.remove('overtime');
+    timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
+    timerBar.style.background = 'rgba(70, 110, 180, 0.5)';
+    mainBtn.hidden = isLastActionOfWorkout();
+    mainBtn.textContent = 'Rest';
+  } else {
+    const remaining = state.currentRestDefault - elapsedSec;
+    phaseLabel.textContent = 'Rest';
+    timerText.textContent = fmtMMSS(remaining);
+    timerDisplay.classList.toggle('overtime', remaining < 0);
+    timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
+    timerBar.style.background = restBarColor(remaining, state.currentRestDefault);
+    mainBtn.hidden = isLastActionOfWorkout();
+    mainBtn.textContent = 'Next';
+  }
+}
+
+function onStart() {
+  const supersets = parseCount(document.getElementById('supersetsInput').value, 3, 9);
+  const exercisesPerSuperset = parseCount(document.getElementById('exercisesInput').value, 6, 19);
+  const restExercise = parseRestSeconds(document.getElementById('restExerciseInput').value, 60, 900);
+  const restSuperset = parseRestSeconds(document.getElementById('restSupersetInput').value, 180, 900);
+
+  const now = Date.now();
+  state = {
+    config: { supersets, exercisesPerSuperset, restExercise, restSuperset },
+    supersetIndex: 1,
+    exerciseIndex: 1,
+    phase: 'exercise',
+    phaseStartEpoch: now,
+    sessionStartEpoch: now,
+    currentRestDefault: restExercise,
+    entries: [],
+  };
+  saveState();
+  requestWakeLock();
+  render();
+}
+
+function onMainBtn() {
+  const now = Date.now();
+  const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
+
+  if (state.phase === 'exercise') {
+    state.entries.push({ label: 'S' + state.supersetIndex + ' E' + state.exerciseIndex, seconds: elapsedSec });
+    state.currentRestDefault = isLastExerciseInSuperset() ? state.config.restSuperset : state.config.restExercise;
+    state.phase = 'rest';
+    state.phaseStartEpoch = now;
+  } else {
+    state.entries.push({ label: 'Rest', seconds: elapsedSec, target: state.currentRestDefault });
+    if (isLastExerciseInSuperset()) {
+      state.supersetIndex += 1;
+      state.exerciseIndex = 1;
+    } else {
+      state.exerciseIndex += 1;
+    }
+    state.phase = 'exercise';
+    state.phaseStartEpoch = now;
+  }
+  saveState();
+  render();
+}
+
+document.getElementById('startBtn').addEventListener('click', onStart);
+mainBtn.addEventListener('click', onMainBtn);
+
+function tick() {
+  if (state) render();
+}
+setInterval(tick, 1000);
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + d;
+}
+
+function formatTime(date) {
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return h + ':' + m;
+}
+
+function buildSessionHeaderLines(session) {
+  const totalE = session.entries.filter(e => e.label !== 'Rest').reduce((s, e) => s + e.seconds, 0);
+  const totalR = session.entries.filter(e => e.label === 'Rest').reduce((s, e) => s + e.seconds, 0);
+  const line1 = (session.startEpoch && session.endEpoch)
+    ? session.dateStr + ', ' + formatTime(new Date(session.startEpoch)) + '-' + formatTime(new Date(session.endEpoch))
+    : session.dateStr;
+  const line2 = 'Total ' + fmtMMSS(totalE + totalR) +
+    ' (Exercise: ' + fmtMMSS(totalE) + ', Rest: ' + fmtMMSS(totalR) + ')';
+  return { line1, line2 };
+}
+
+function buildSessionBody(session) {
+  return session.entries.map(e => e.label + ' - ' + fmtMMSS(e.seconds)).join('\n');
+}
+
+function buildLogText(session) {
+  const { line1, line2 } = buildSessionHeaderLines(session);
+  return line1 + '\n' + line2 + '\n\n```\n' + buildSessionBody(session) + '\n```';
+}
+
+const TIMELINE_COLORS = {
+  exercise: 'rgba(70, 110, 180, 0.5)',
+  rest: 'rgba(80, 140, 100, 0.55)',
+  excess: 'rgba(179, 51, 51, 0.55)',
+};
+
+function buildTimelineSegments(session) {
+  const total = session.entries.reduce((s, e) => s + e.seconds, 0);
+  if (total <= 0) return [];
+  const segments = [];
+  session.entries.forEach((e) => {
+    const label = e.label + ' - ' + fmtMMSS(e.seconds);
+    if (e.label !== 'Rest') {
+      segments.push({ seconds: e.seconds, color: TIMELINE_COLORS.exercise, label });
+      return;
+    }
+    if (e.target && e.seconds > e.target) {
+      segments.push({ seconds: e.target, color: TIMELINE_COLORS.rest, label });
+      segments.push({ seconds: e.seconds - e.target, color: TIMELINE_COLORS.excess, label });
+    } else {
+      segments.push({ seconds: e.seconds, color: TIMELINE_COLORS.rest, label });
+    }
+  });
+  return segments.map((seg) => ({ pct: (seg.seconds / total) * 100, color: seg.color, label: seg.label }));
+}
+
+function renderLog() {
+  const logList = document.getElementById('logList');
+  logList.innerHTML = '';
+  logHistory.forEach((session, i) => {
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+
+    const header = document.createElement('div');
+    header.className = 'log-header';
+
+    const headerBg = document.createElement('div');
+    headerBg.className = 'log-header-bg';
+    buildTimelineSegments(session).forEach((seg) => {
+      const segEl = document.createElement('div');
+      segEl.style.width = seg.pct + '%';
+      segEl.style.background = seg.color;
+      segEl.title = seg.label;
+      headerBg.appendChild(segEl);
+    });
+
+    const headerText = document.createElement('div');
+    const { line1, line2 } = buildSessionHeaderLines(session);
+    const line1El = document.createElement('div');
+    line1El.className = 'log-header-line1';
+    line1El.textContent = line1;
+    const line2El = document.createElement('div');
+    line2El.className = 'log-header-line2';
+    line2El.textContent = line2;
+    headerText.appendChild(line1El);
+    headerText.appendChild(line2El);
+
+    const actions = document.createElement('div');
+    actions.className = 'log-header-actions';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.textContent = 'Copy';
+    copyBtn.addEventListener('click', (e) => { e.stopPropagation(); copyEntry(i, copyBtn); });
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'icon-btn-danger';
+    deleteBtn.textContent = '🗑️';
+    deleteBtn.setAttribute('aria-label', 'Delete');
+    deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); deleteEntry(i); });
+
+    actions.appendChild(copyBtn);
+    actions.appendChild(deleteBtn);
+
+    header.appendChild(headerBg);
+    header.appendChild(headerText);
+    header.appendChild(actions);
+
+    const pre = document.createElement('pre');
+    pre.textContent = buildSessionBody(session);
+    pre.hidden = true;
+    header.addEventListener('click', () => { pre.hidden = !pre.hidden; });
+
+    div.appendChild(header);
+    div.appendChild(pre);
+    logList.appendChild(div);
+  });
+}
+
+function copyEntry(index, btn) {
+  navigator.clipboard.writeText(buildLogText(logHistory[index])).then(
+    () => { if (btn) { const orig = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = orig; }, 1500); } },
+    () => { if (btn) { const orig = btn.textContent; btn.textContent = 'Copy failed'; setTimeout(() => { btn.textContent = orig; }, 1500); } }
+  );
+}
+
+function deleteEntry(index) {
+  if (!confirm('Delete this log entry?')) return;
+  logHistory.splice(index, 1);
+  saveLog();
+  renderLog();
+}
+
+function buildExportText() {
+  return logHistory.map(buildLogText).join('\n\n---\n\n');
+}
+
+function onExport() {
+  const blob = new Blob([buildExportText()], { type: 'text/markdown' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'timer-log.md';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('exportBtn').addEventListener('click', onExport);
+
+function onClearLog() {
+  if (!confirm('Clear the entire log? This deletes all ' + logHistory.length + ' entries.')) return;
+  logHistory = [];
+  saveLog();
+  renderLog();
+}
+
+document.getElementById('clearLogBtn').addEventListener('click', onClearLog);
+
+let wakeLock = null;
+
+async function requestWakeLock() {
+  const statusEl = document.getElementById('wakeLockStatus');
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    if (statusEl) statusEl.textContent = 'Screen: kept on';
+  } catch (e) {
+    // Wake Lock unsupported or denied — workout still works, just show the user why.
+    if (statusEl) statusEl.textContent = 'Screen: may sleep (wake lock unavailable)';
+  }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) {
+    wakeLock.release();
+    wakeLock = null;
+  }
+  const statusEl = document.getElementById('wakeLockStatus');
+  if (statusEl) statusEl.textContent = '';
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state) requestWakeLock();
+});
+
+function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    document.exitFullscreen();
+  } else {
+    document.documentElement.requestFullscreen().catch(() => {});
+  }
+}
+
+document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
+
+document.addEventListener('fullscreenchange', () => {
+  document.getElementById('fullscreenBtn').textContent = document.fullscreenElement ? '✕' : '⛶';
+});
+
+window.addEventListener('storage', (event) => {
+  if (event.key === 'timer.log') {
+    logHistory = loadLog();
+    renderLog();
+  } else if (event.key === 'timer.session') {
+    if (!state) {
+      state = loadState();
+      render();
+    }
+  }
+});
+
+function onFinish() {
+  const now = Date.now();
+  const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
+  const label = state.phase === 'exercise'
+    ? 'S' + state.supersetIndex + ' E' + state.exerciseIndex
+    : 'Rest';
+  const entry = { label, seconds: elapsedSec };
+  if (state.phase === 'rest') entry.target = state.currentRestDefault;
+  state.entries.push(entry);
+
+  logHistory.unshift({
+    dateStr: formatDate(new Date(state.sessionStartEpoch)),
+    startEpoch: state.sessionStartEpoch,
+    endEpoch: now,
+    entries: state.entries,
+  });
+  saveLog();
+
+  state = null;
+  releaseWakeLock();
+  saveState();
+  render();
+  renderLog();
+}
+
+finishBtn.addEventListener('click', onFinish);
+
+function onCancel() {
+  state = null;
+  releaseWakeLock();
+  saveState();
+  render();
+}
+
+document.getElementById('cancelBtn').addEventListener('click', onCancel);
+
+document.querySelectorAll('.config-grid input').forEach((input) => {
+  input.addEventListener('input', saveConfig);
+});
+
+function adjustInputValue(input, delta) {
+  const min = input.min !== '' ? parseInt(input.min, 10) : -Infinity;
+  const max = input.max !== '' ? parseInt(input.max, 10) : Infinity;
+  const current = parseInt(input.value, 10);
+  const base = Number.isFinite(current) ? current : 0;
+  input.value = Math.min(max, Math.max(min, base + delta));
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+document.querySelectorAll('.stepper-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const input = document.getElementById(btn.dataset.target);
+    adjustInputValue(input, parseInt(btn.dataset.delta, 10));
+  });
+});
+
+document.querySelectorAll('.config-grid input').forEach((input) => {
+  input.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const step = parseInt(input.step, 10) || 1;
+    adjustInputValue(input, e.deltaY < 0 ? step : -step);
+  }, { passive: false });
+});
+
+loadConfig();
+state = loadState();
+logHistory = loadLog();
+if (state) requestWakeLock();
+render();
+renderLog();
+</script>
+</body>
+</html>
