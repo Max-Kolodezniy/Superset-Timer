@@ -90,7 +90,7 @@
       <label for="supersetsInput">Supersets</label>
       <div class="stepper">
         <button type="button" class="stepper-btn stepper-btn-minus" data-target="supersetsInput" data-delta="-1">−</button>
-        <input type="number" id="supersetsInput" value="3" min="1">
+        <input type="number" id="supersetsInput" value="3" min="1" max="9">
         <button type="button" class="stepper-btn stepper-btn-plus" data-target="supersetsInput" data-delta="1">+</button>
       </div>
     </div>
@@ -98,7 +98,7 @@
       <label for="restSupersetInput">Rest (sec)</label>
       <div class="stepper">
         <button type="button" class="stepper-btn stepper-btn-minus" data-target="restSupersetInput" data-delta="-10">−</button>
-        <input type="number" id="restSupersetInput" value="180" min="0" step="10">
+        <input type="number" id="restSupersetInput" value="180" min="0" max="900" step="10">
         <button type="button" class="stepper-btn stepper-btn-plus" data-target="restSupersetInput" data-delta="10">+</button>
       </div>
     </div>
@@ -106,7 +106,7 @@
       <label for="exercisesInput">Exercises</label>
       <div class="stepper">
         <button type="button" class="stepper-btn stepper-btn-minus" data-target="exercisesInput" data-delta="-1">−</button>
-        <input type="number" id="exercisesInput" value="6" min="1">
+        <input type="number" id="exercisesInput" value="6" min="1" max="19">
         <button type="button" class="stepper-btn stepper-btn-plus" data-target="exercisesInput" data-delta="1">+</button>
       </div>
     </div>
@@ -114,7 +114,7 @@
       <label for="restExerciseInput">Rest (sec)</label>
       <div class="stepper">
         <button type="button" class="stepper-btn stepper-btn-minus" data-target="restExerciseInput" data-delta="-10">−</button>
-        <input type="number" id="restExerciseInput" value="60" min="0" step="10">
+        <input type="number" id="restExerciseInput" value="60" min="0" max="900" step="10">
         <button type="button" class="stepper-btn stepper-btn-plus" data-target="restExerciseInput" data-delta="10">+</button>
       </div>
     </div>
@@ -203,13 +203,15 @@ function fmtMMSS(totalSeconds) {
   return neg ? '-' + str : str;
 }
 
-function parseCount(value, fallback) {
+function parseCount(value, fallback, max) {
   const n = parseInt(value, 10);
-  return Number.isFinite(n) && n >= 1 ? n : fallback;
+  if (!Number.isFinite(n) || n < 1) return fallback;
+  return Math.min(n, max);
 }
-function parseRestSeconds(value, fallback) {
+function parseRestSeconds(value, fallback, max) {
   const n = parseInt(value, 10);
-  return Number.isFinite(n) && n >= 0 ? n : fallback;
+  if (!Number.isFinite(n) || n < 0) return fallback;
+  return Math.min(n, max);
 }
 
 function restBarColor(remaining, restDefault) {
@@ -269,10 +271,10 @@ function render() {
 }
 
 function onStart() {
-  const supersets = parseCount(document.getElementById('supersetsInput').value, 3);
-  const exercisesPerSuperset = parseCount(document.getElementById('exercisesInput').value, 6);
-  const restExercise = parseRestSeconds(document.getElementById('restExerciseInput').value, 60);
-  const restSuperset = parseRestSeconds(document.getElementById('restSupersetInput').value, 180);
+  const supersets = parseCount(document.getElementById('supersetsInput').value, 3, 9);
+  const exercisesPerSuperset = parseCount(document.getElementById('exercisesInput').value, 6, 19);
+  const restExercise = parseRestSeconds(document.getElementById('restExerciseInput').value, 60, 900);
+  const restSuperset = parseRestSeconds(document.getElementById('restSupersetInput').value, 180, 900);
 
   const now = Date.now();
   state = {
@@ -568,9 +570,10 @@ document.querySelectorAll('.config-grid input').forEach((input) => {
 
 function adjustInputValue(input, delta) {
   const min = input.min !== '' ? parseInt(input.min, 10) : -Infinity;
+  const max = input.max !== '' ? parseInt(input.max, 10) : Infinity;
   const current = parseInt(input.value, 10);
   const base = Number.isFinite(current) ? current : 0;
-  input.value = Math.max(min, base + delta);
+  input.value = Math.min(max, Math.max(min, base + delta));
   input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
