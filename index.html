@@ -68,14 +68,16 @@
   .log-section-header button { width: auto; margin-top: 0; padding: 6px 12px; font-size: 0.85rem; background: #1a1a1a; color: #ccc; }
   .log-entry { border: 1px solid #333; border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
   .log-entry .log-header {
+    position: relative; overflow: hidden;
     background: #2a2a2a; padding: 12px; margin: 0;
     display: flex; justify-content: space-between; align-items: center; gap: 8px;
     cursor: pointer; font-size: 0.85rem;
   }
+  .log-header-bg { position: absolute; inset: 0; display: flex; z-index: 0; }
+  .log-header-line1, .log-header-actions { position: relative; z-index: 1; }
   .log-header-line1 { font-size: 0.9rem; }
-  .log-header-line2 { font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
+  .log-header-line2 { position: relative; z-index: 1; font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
   .log-entry pre { white-space: pre-wrap; font-size: 0.85rem; margin: 0; padding: 12px; background: #1a1a1a; }
-  .log-timeline { display: flex; width: 100%; height: 10px; }
   .log-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
   button.icon-btn-danger { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
@@ -396,6 +398,16 @@ function renderLog() {
     const header = document.createElement('div');
     header.className = 'log-header';
 
+    const headerBg = document.createElement('div');
+    headerBg.className = 'log-header-bg';
+    buildTimelineSegments(session).forEach((seg) => {
+      const segEl = document.createElement('div');
+      segEl.style.width = seg.pct + '%';
+      segEl.style.background = seg.color;
+      segEl.title = seg.label;
+      headerBg.appendChild(segEl);
+    });
+
     const headerText = document.createElement('div');
     const { line1, line2 } = buildSessionHeaderLines(session);
     const line1El = document.createElement('div');
@@ -423,6 +435,7 @@ function renderLog() {
     actions.appendChild(copyBtn);
     actions.appendChild(deleteBtn);
 
+    header.appendChild(headerBg);
     header.appendChild(headerText);
     header.appendChild(actions);
 
@@ -431,19 +444,8 @@ function renderLog() {
     pre.hidden = true;
     header.addEventListener('click', () => { pre.hidden = !pre.hidden; });
 
-    const timeline = document.createElement('div');
-    timeline.className = 'log-timeline';
-    buildTimelineSegments(session).forEach((seg) => {
-      const segEl = document.createElement('div');
-      segEl.style.width = seg.pct + '%';
-      segEl.style.background = seg.color;
-      segEl.title = seg.label;
-      timeline.appendChild(segEl);
-    });
-
     div.appendChild(header);
     div.appendChild(pre);
-    div.appendChild(timeline);
     logList.appendChild(div);
   });
 }
