@@ -564,15 +564,27 @@ document.querySelectorAll('.config-grid input').forEach((input) => {
   input.addEventListener('input', saveConfig);
 });
 
+function adjustInputValue(input, delta) {
+  const min = input.min !== '' ? parseInt(input.min, 10) : -Infinity;
+  const current = parseInt(input.value, 10);
+  const base = Number.isFinite(current) ? current : 0;
+  input.value = Math.max(min, base + delta);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
 document.querySelectorAll('.stepper-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const input = document.getElementById(btn.dataset.target);
-    const min = input.min !== '' ? parseInt(input.min, 10) : -Infinity;
-    const current = parseInt(input.value, 10);
-    const base = Number.isFinite(current) ? current : 0;
-    input.value = Math.max(min, base + parseInt(btn.dataset.delta, 10));
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+    adjustInputValue(input, parseInt(btn.dataset.delta, 10));
   });
+});
+
+document.querySelectorAll('.config-grid input').forEach((input) => {
+  input.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const step = parseInt(input.step, 10) || 1;
+    adjustInputValue(input, e.deltaY < 0 ? step : -step);
+  }, { passive: false });
 });
 
 loadConfig();
