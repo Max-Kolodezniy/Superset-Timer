@@ -337,13 +337,6 @@ function formatTime(date) {
   return h + ':' + m;
 }
 
-function buildSessionHeader(session) {
-  const totalE = session.entries.filter(e => e.label !== 'Rest').reduce((s, e) => s + e.seconds, 0);
-  const totalR = session.entries.filter(e => e.label === 'Rest').reduce((s, e) => s + e.seconds, 0);
-  return session.dateStr + ' - ' + fmtMMSS(totalE + totalR) +
-    ' (E: ' + fmtMMSS(totalE) + ', R: ' + fmtMMSS(totalR) + ')';
-}
-
 function buildSessionHeaderLines(session) {
   const totalE = session.entries.filter(e => e.label !== 'Rest').reduce((s, e) => s + e.seconds, 0);
   const totalR = session.entries.filter(e => e.label === 'Rest').reduce((s, e) => s + e.seconds, 0);
@@ -360,7 +353,8 @@ function buildSessionBody(session) {
 }
 
 function buildLogText(session) {
-  return buildSessionHeader(session) + '\n' + buildSessionBody(session);
+  const { line1, line2 } = buildSessionHeaderLines(session);
+  return line1 + '\n' + line2 + '\n\n```\n' + buildSessionBody(session) + '\n```';
 }
 
 const TIMELINE_COLORS = {
