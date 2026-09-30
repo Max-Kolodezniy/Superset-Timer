@@ -165,16 +165,16 @@ function parseRestSeconds(value, fallback) {
 
 function restBarColor(remaining, restDefault) {
   const half = restDefault / 2;
-  const blue = [70, 110, 180];
+  const green = [80, 140, 100];
   const red = [179, 51, 51];
   let t;
   if (remaining >= half) t = 0;
   else if (remaining <= 10) t = 1;
   else t = (half - remaining) / Math.max(half - 10, 1);
   t = Math.max(0, Math.min(t, 1));
-  const r = Math.round(blue[0] + (red[0] - blue[0]) * t);
-  const g = Math.round(blue[1] + (red[1] - blue[1]) * t);
-  const b = Math.round(blue[2] + (red[2] - blue[2]) * t);
+  const r = Math.round(green[0] + (red[0] - green[0]) * t);
+  const g = Math.round(green[1] + (red[1] - green[1]) * t);
+  const b = Math.round(green[2] + (red[2] - green[2]) * t);
   return 'rgba(' + r + ',' + g + ',' + b + ',0.55)';
 }
 
