@@ -58,6 +58,8 @@
     display: flex; justify-content: space-between; align-items: center; gap: 8px;
     cursor: pointer; font-size: 0.85rem;
   }
+  .log-header-line1 { font-size: 0.9rem; }
+  .log-header-line2 { font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
   .log-entry pre { white-space: pre-wrap; font-size: 0.85rem; margin: 0; padding: 12px; background: #1a1a1a; }
   .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
   [hidden] { display: none !important; }
@@ -276,11 +278,28 @@ function formatDate(date) {
   return y + '-' + m + '-' + d;
 }
 
+function formatTime(date) {
+  const h = String(date.getHours()).padStart(2, '0');
+  const m = String(date.getMinutes()).padStart(2, '0');
+  return h + ':' + m;
+}
+
 function buildSessionHeader(session) {
   const totalE = session.entries.filter(e => e.label !== 'Rest').reduce((s, e) => s + e.seconds, 0);
   const totalR = session.entries.filter(e => e.label === 'Rest').reduce((s, e) => s + e.seconds, 0);
   return session.dateStr + ' - ' + fmtMMSS(totalE + totalR) +
     ' (E: ' + fmtMMSS(totalE) + ', R: ' + fmtMMSS(totalR) + ')';
+}
+
+function buildSessionHeaderLines(session) {
+  const totalE = session.entries.filter(e => e.label !== 'Rest').reduce((s, e) => s + e.seconds, 0);
+  const totalR = session.entries.filter(e => e.label === 'Rest').reduce((s, e) => s + e.seconds, 0);
+  const line1 = (session.startEpoch && session.endEpoch)
+    ? session.dateStr + ', ' + formatTime(new Date(session.startEpoch)) + '-' + formatTime(new Date(session.endEpoch))
+    : session.dateStr;
+  const line2 = 'Total ' + fmtMMSS(totalE + totalR) +
+    ' (Exercise: ' + fmtMMSS(totalE) + ', Rest: ' + fmtMMSS(totalR) + ')';
+  return { line1, line2 };
 }
 
 function buildSessionBody(session) {
@@ -301,8 +320,16 @@ function renderLog() {
     const header = document.createElement('div');
     header.className = 'log-header';
 
-    const headerText = document.createElement('span');
-    headerText.textContent = buildSessionHeader(session);
+    const headerText = document.createElement('div');
+    const { line1, line2 } = buildSessionHeaderLines(session);
+    const line1El = document.createElement('div');
+    line1El.className = 'log-header-line1';
+    line1El.textContent = line1;
+    const line2El = document.createElement('div');
+    line2El.className = 'log-header-line2';
+    line2El.textContent = line2;
+    headerText.appendChild(line1El);
+    headerText.appendChild(line2El);
 
     const copyBtn = document.createElement('button');
     copyBtn.textContent = 'Copy';
@@ -391,7 +418,12 @@ function onFinish() {
     : 'Rest';
   state.entries.push({ label, seconds: elapsedSec });
 
-  logHistory.unshift({ dateStr: formatDate(new Date(state.sessionStartEpoch)), entries: state.entries });
+  logHistory.unshift({
+    dateStr: formatDate(new Date(state.sessionStartEpoch)),
+    startEpoch: state.sessionStartEpoch,
+    endEpoch: now,
+    entries: state.entries,
+  });
   saveLog();
 
   state = null;
