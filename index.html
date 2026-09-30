@@ -10,12 +10,13 @@
   body {
     font-family: -apple-system, system-ui, sans-serif;
     background: #000; color: #eee;
-    margin: 0; padding: 16px;
-    max-width: 900px; margin-inline: auto;
+    margin: 0; padding: 56px 16px 16px;
   }
-  .app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  h1 { font-size: 1.1rem; opacity: 0.7; margin: 0; }
-  #fullscreenBtn { width: auto; margin-top: 0; padding: 6px 10px; font-size: 1.1rem; background: #333; color: #eee; }
+  #fullscreenBtn {
+    position: fixed; top: 12px; right: 12px; z-index: 10;
+    width: auto; margin-top: 0; padding: 6px 10px; font-size: 1.1rem;
+    background: #333; color: #eee; opacity: 0.85;
+  }
   section { margin-bottom: 24px; }
   label { display: block; margin: 12px 0 4px; font-size: 0.9rem; opacity: 0.8; }
   input[type="number"] {
@@ -84,10 +85,7 @@
 </head>
 <body>
 
-<div class="app-header">
-  <h1>Superset Timer</h1>
-  <button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
-</div>
+<button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
 
 <section id="configScreen">
   <div class="config-grid">
