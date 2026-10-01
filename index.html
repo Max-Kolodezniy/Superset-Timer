@@ -82,9 +82,12 @@
   .log-header-line1 { font-size: 0.9rem; }
   .log-header-line2 { position: relative; z-index: 1; font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
   .log-table-wrap { background: #1a1a1a; padding: 12px; overflow-x: auto; }
-  .log-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .log-table { border-collapse: collapse; font-size: 0.85rem; }
   .log-table th, .log-table td { padding: 6px 10px; text-align: left; border: 1px solid #333; white-space: nowrap; }
   .log-table th { color: #aaa; font-weight: normal; }
+  .log-table th.col-time, .log-table th.col-rest,
+  .log-table td.col-time, .log-table td.col-rest { width: 70px; }
+  .log-table th .unit { display: block; color: #777; font-size: 0.75em; font-weight: normal; }
   .log-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
   button.icon-btn-danger { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
@@ -393,9 +396,21 @@ function buildSessionTable(session) {
 
   const thead = document.createElement('thead');
   const headRow = document.createElement('tr');
-  ['S#', 'Exercise', 'Time (mm:ss)', 'Rest (mm:ss)'].forEach((text) => {
+  [
+    { text: 'S#' },
+    { text: 'Exercise' },
+    { text: 'Time', unit: '(mm:ss)', className: 'col-time' },
+    { text: 'Rest', unit: '(mm:ss)', className: 'col-rest' },
+  ].forEach((col) => {
     const th = document.createElement('th');
-    th.textContent = text;
+    if (col.className) th.className = col.className;
+    th.appendChild(document.createTextNode(col.text));
+    if (col.unit) {
+      const unit = document.createElement('span');
+      unit.className = 'unit';
+      unit.textContent = col.unit;
+      th.appendChild(unit);
+    }
     headRow.appendChild(th);
   });
   thead.appendChild(headRow);
@@ -403,9 +418,15 @@ function buildSessionTable(session) {
   const tbody = document.createElement('tbody');
   sessionRows(session).forEach((r) => {
     const tr = document.createElement('tr');
-    [r.superset, r.exercise, r.time, r.rest].forEach((text) => {
+    [
+      { text: r.superset },
+      { text: r.exercise },
+      { text: r.time, className: 'col-time' },
+      { text: r.rest, className: 'col-rest' },
+    ].forEach((col) => {
       const td = document.createElement('td');
-      td.textContent = text;
+      if (col.className) td.className = col.className;
+      td.textContent = col.text;
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
