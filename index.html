@@ -249,7 +249,7 @@ function exerciseParts(supersetIndex, exerciseIndex) {
   const custom = names && names[exerciseIndex - 1];
   const name = custom || ('Exercise ' + exerciseIndex);
   const superset = 'S' + supersetIndex;
-  return { superset, name, label: superset + (custom ? ' - ' : ' ') + name };
+  return { superset, name, label: superset + ' : ' + name };
 }
 
 function isLastExerciseInSuperset() {
