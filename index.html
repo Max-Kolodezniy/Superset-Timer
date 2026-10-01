@@ -53,7 +53,7 @@
   }
   .config-grid, .timer-block { min-height: 220px; }
   .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
-  #phaseLabel { font-size: 1.4rem; text-align: center; margin-bottom: 4px; }
+  #phaseLabel { font-size: 2rem; text-align: center; margin-bottom: 4px; }
   #timerDisplay {
     position: relative; overflow: hidden;
     font-size: clamp(2.5rem, 28cqw, 7rem); text-align: center; font-variant-numeric: tabular-nums;
@@ -81,7 +81,13 @@
   .log-header-line1, .log-header-actions { position: relative; z-index: 1; }
   .log-header-line1 { font-size: 0.9rem; }
   .log-header-line2 { position: relative; z-index: 1; font-size: 0.7rem; opacity: 0.7; margin-top: 2px; }
-  .log-entry pre { white-space: pre-wrap; font-size: 0.85rem; margin: 0; padding: 12px; background: #1a1a1a; }
+  .log-table-wrap { background: #1a1a1a; padding: 12px; overflow-x: auto; }
+  .log-table { border-collapse: collapse; font-size: 0.85rem; }
+  .log-table th, .log-table td { padding: 6px 10px; text-align: left; border: 1px solid #333; white-space: nowrap; }
+  .log-table th { color: #aaa; font-weight: normal; }
+  .log-table th.col-time, .log-table th.col-rest,
+  .log-table td.col-time, .log-table td.col-rest { width: 70px; }
+  .log-table th .unit { display: block; color: #777; font-size: 0.75em; font-weight: normal; }
   .log-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .log-entry button { background: #333; color: #eee; padding: 8px 12px; font-size: 0.85rem; margin-top: 0; width: auto; flex-shrink: 0; }
   button.icon-btn-danger { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
@@ -238,6 +244,14 @@ function restBarColor(remaining, restDefault) {
   return 'rgba(' + r + ',' + g + ',' + b + ',0.55)';
 }
 
+function exerciseParts(supersetIndex, exerciseIndex) {
+  const names = state && state.config && state.config.exerciseNames;
+  const custom = names && names[exerciseIndex - 1];
+  const name = custom || ('Exercise ' + exerciseIndex);
+  const superset = 'S' + supersetIndex;
+  return { superset, name, label: superset + (custom ? ' - ' : ' ') + name };
+}
+
 function isLastExerciseInSuperset() {
   return state.exerciseIndex === state.config.exercisesPerSuperset;
 }
@@ -260,7 +274,7 @@ function render() {
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
 
   if (state.phase === 'exercise') {
-    phaseLabel.textContent = 'S' + state.supersetIndex + ' E' + state.exerciseIndex;
+    phaseLabel.textContent = exerciseParts(state.supersetIndex, state.exerciseIndex).label;
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
@@ -287,7 +301,7 @@ function onStart() {
 
   const now = Date.now();
   state = {
-    config: { supersets, exercisesPerSuperset, restExercise, restSuperset },
+    config: { supersets, exercisesPerSuperset, restExercise, restSuperset, exerciseNames: queryExerciseNames },
     supersetIndex: 1,
     exerciseIndex: 1,
     phase: 'exercise',
@@ -306,7 +320,8 @@ function onMainBtn() {
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
 
   if (state.phase === 'exercise') {
-    state.entries.push({ label: 'S' + state.supersetIndex + ' E' + state.exerciseIndex, seconds: elapsedSec });
+    const parts = exerciseParts(state.supersetIndex, state.exerciseIndex);
+    state.entries.push({ label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name });
     state.currentRestDefault = isLastExerciseInSuperset() ? state.config.restSuperset : state.config.restExercise;
     state.phase = 'rest';
     state.phaseStartEpoch = now;
@@ -357,13 +372,74 @@ function buildSessionHeaderLines(session) {
   return { line1, line2 };
 }
 
+function sessionRows(session) {
+  const rows = [];
+  session.entries.forEach((e) => {
+    if (e.label === 'Rest') {
+      if (rows.length) rows[rows.length - 1].rest = fmtMMSS(e.seconds);
+      return;
+    }
+    rows.push({ superset: e.superset, exercise: e.exercise, time: fmtMMSS(e.seconds), rest: '' });
+  });
+  return rows;
+}
+
 function buildSessionBody(session) {
-  return session.entries.map(e => e.label + ' - ' + fmtMMSS(e.seconds)).join('\n');
+  const header = '| S# | Exercise | Time (mm:ss) | Rest (mm:ss) |\n|---|---|---|---|';
+  const body = sessionRows(session).map(r => `| ${r.superset} | ${r.exercise} | ${r.time} | ${r.rest} |`).join('\n');
+  return header + '\n' + body;
+}
+
+function buildSessionTable(session) {
+  const table = document.createElement('table');
+  table.className = 'log-table';
+
+  const thead = document.createElement('thead');
+  const headRow = document.createElement('tr');
+  [
+    { text: 'S#' },
+    { text: 'Exercise' },
+    { text: 'Time', unit: '(mm:ss)', className: 'col-time' },
+    { text: 'Rest', unit: '(mm:ss)', className: 'col-rest' },
+  ].forEach((col) => {
+    const th = document.createElement('th');
+    if (col.className) th.className = col.className;
+    th.appendChild(document.createTextNode(col.text));
+    if (col.unit) {
+      const unit = document.createElement('span');
+      unit.className = 'unit';
+      unit.textContent = col.unit;
+      th.appendChild(unit);
+    }
+    headRow.appendChild(th);
+  });
+  thead.appendChild(headRow);
+
+  const tbody = document.createElement('tbody');
+  sessionRows(session).forEach((r) => {
+    const tr = document.createElement('tr');
+    [
+      { text: r.superset },
+      { text: r.exercise },
+      { text: r.time, className: 'col-time' },
+      { text: r.rest, className: 'col-rest' },
+    ].forEach((col) => {
+      const td = document.createElement('td');
+      if (col.className) td.className = col.className;
+      td.textContent = col.text;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  return table;
 }
 
 function buildLogText(session) {
   const { line1, line2 } = buildSessionHeaderLines(session);
-  return line1 + '\n' + line2 + '\n\n```\n' + buildSessionBody(session) + '\n```';
+  return line1 + '\n' + line2 + '\n\n' + buildSessionBody(session);
 }
 
 const TIMELINE_COLORS = {
@@ -443,13 +519,14 @@ function renderLog() {
     header.appendChild(headerText);
     header.appendChild(actions);
 
-    const pre = document.createElement('pre');
-    pre.textContent = buildSessionBody(session);
-    pre.hidden = true;
-    header.addEventListener('click', () => { pre.hidden = !pre.hidden; });
+    const tableWrap = document.createElement('div');
+    tableWrap.className = 'log-table-wrap';
+    tableWrap.appendChild(buildSessionTable(session));
+    tableWrap.hidden = true;
+    header.addEventListener('click', () => { tableWrap.hidden = !tableWrap.hidden; });
 
     div.appendChild(header);
-    div.appendChild(pre);
+    div.appendChild(tableWrap);
     logList.appendChild(div);
   });
 }
@@ -548,10 +625,9 @@ window.addEventListener('storage', (event) => {
 function onFinish() {
   const now = Date.now();
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
-  const label = state.phase === 'exercise'
-    ? 'S' + state.supersetIndex + ' E' + state.exerciseIndex
-    : 'Rest';
-  const entry = { label, seconds: elapsedSec };
+  const parts = state.phase === 'exercise' ? exerciseParts(state.supersetIndex, state.exerciseIndex) : null;
+  const entry = { label: parts ? parts.label : 'Rest', seconds: elapsedSec };
+  if (parts) { entry.superset = parts.superset; entry.exercise = parts.name; }
   if (state.phase === 'rest') entry.target = state.currentRestDefault;
   state.entries.push(entry);
 
@@ -611,7 +687,18 @@ document.querySelectorAll('.config-grid input').forEach((input) => {
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 
+let queryExerciseNames = null;
+function applyQueryExercises() {
+  const names = new URLSearchParams(window.location.search).getAll('exercises');
+  if (!names.length) return;
+  const exercisesInput = document.getElementById('exercisesInput');
+  const max = parseInt(exercisesInput.max, 10);
+  queryExerciseNames = names.slice(0, max);
+  exercisesInput.value = queryExerciseNames.length;
+}
+
 loadConfig();
+applyQueryExercises();
 state = loadState();
 logHistory = loadLog();
 if (state) requestWakeLock();
