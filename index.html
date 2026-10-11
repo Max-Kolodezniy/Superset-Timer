@@ -38,8 +38,16 @@
   }
   .stepper-btn-minus { left: 0; }
   .stepper-btn-plus { right: 0; }
-  .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; align-content: center; max-width: 480px; margin-inline: auto; }
-  .config-grid label { margin-top: 10px; }
+  .config-grid { display: grid; grid-template-columns: auto auto auto auto; column-gap: 8px; row-gap: 0px; align-items: center; justify-content: center; max-width: 480px; margin-inline: auto; overflow-x: auto; }
+  .config-grid > span { white-space: nowrap; }
+  .config-checkbox { display: flex; align-items: center; gap: 6px; font-size: 1rem; cursor: pointer; padding: 10px 8px; margin: -10px -8px; }
+  .config-checkbox input { width: 18px; height: 18px; cursor: pointer; }
+  .config-checkbox:has(input:not(:checked)) span { color: #666; }
+  .warmup-checkbox { grid-column: 1 / 3; justify-self: start; }
+  .cooldown-checkbox { grid-column: 3 / 5; justify-self: end; }
+  .stepper-sm { width: 93px; flex-shrink: 0; }
+  .stepper-sm .stepper-btn { width: 32px; font-size: 1.2rem; }
+  .stepper-sm input[type="number"] { padding: 8px 32px; font-size: 1rem; }
   button {
     width: 100%; padding: 18px; font-size: 1.3rem; margin-top: 12px;
     border: none; border-radius: 10px; cursor: pointer;
@@ -102,38 +110,40 @@
 
 <section id="configScreen">
   <div class="config-grid">
-    <div>
-      <label for="supersetsInput">Supersets</label>
-      <div class="stepper">
-        <button type="button" class="stepper-btn stepper-btn-minus" data-target="supersetsInput" data-delta="-1">−</button>
-        <input type="number" id="supersetsInput" value="3" min="1" max="9">
-        <button type="button" class="stepper-btn stepper-btn-plus" data-target="supersetsInput" data-delta="1">+</button>
-      </div>
+    <label class="config-checkbox warmup-checkbox">
+      <input type="checkbox" id="warmupCheckbox" checked>
+      <span>Warm-up</span>
+    </label>
+    <label class="config-checkbox cooldown-checkbox">
+      <input type="checkbox" id="cooldownCheckbox" checked>
+      <span>Cool-down</span>
+    </label>
+
+    <div class="stepper stepper-sm">
+      <button type="button" class="stepper-btn stepper-btn-minus" data-target="supersetsInput" data-delta="-1">−</button>
+      <input type="number" id="supersetsInput" value="3" min="1" max="9">
+      <button type="button" class="stepper-btn stepper-btn-plus" data-target="supersetsInput" data-delta="1">+</button>
     </div>
-    <div>
-      <label for="restSupersetInput">Rest (sec)</label>
-      <div class="stepper">
-        <button type="button" class="stepper-btn stepper-btn-minus" data-target="restSupersetInput" data-delta="-10">−</button>
-        <input type="number" id="restSupersetInput" value="180" min="0" max="900" step="10">
-        <button type="button" class="stepper-btn stepper-btn-plus" data-target="restSupersetInput" data-delta="10">+</button>
-      </div>
+    <span>supersets with</span>
+    <div class="stepper stepper-sm">
+      <button type="button" class="stepper-btn stepper-btn-minus" data-target="restSupersetInput" data-delta="-10">−</button>
+      <input type="number" id="restSupersetInput" value="180" min="0" max="900" step="10">
+      <button type="button" class="stepper-btn stepper-btn-plus" data-target="restSupersetInput" data-delta="10">+</button>
     </div>
-    <div>
-      <label for="exercisesInput">Exercises</label>
-      <div class="stepper">
-        <button type="button" class="stepper-btn stepper-btn-minus" data-target="exercisesInput" data-delta="-1">−</button>
-        <input type="number" id="exercisesInput" value="6" min="1" max="19">
-        <button type="button" class="stepper-btn stepper-btn-plus" data-target="exercisesInput" data-delta="1">+</button>
-      </div>
+    <span>sec rest</span>
+
+    <div class="stepper stepper-sm">
+      <button type="button" class="stepper-btn stepper-btn-minus" data-target="exercisesInput" data-delta="-1">−</button>
+      <input type="number" id="exercisesInput" value="6" min="1" max="19">
+      <button type="button" class="stepper-btn stepper-btn-plus" data-target="exercisesInput" data-delta="1">+</button>
     </div>
-    <div>
-      <label for="restExerciseInput">Rest (sec)</label>
-      <div class="stepper">
-        <button type="button" class="stepper-btn stepper-btn-minus" data-target="restExerciseInput" data-delta="-10">−</button>
-        <input type="number" id="restExerciseInput" value="60" min="0" max="900" step="10">
-        <button type="button" class="stepper-btn stepper-btn-plus" data-target="restExerciseInput" data-delta="10">+</button>
-      </div>
+    <span>exercises with</span>
+    <div class="stepper stepper-sm">
+      <button type="button" class="stepper-btn stepper-btn-minus" data-target="restExerciseInput" data-delta="-10">−</button>
+      <input type="number" id="restExerciseInput" value="60" min="0" max="900" step="10">
+      <button type="button" class="stepper-btn stepper-btn-plus" data-target="restExerciseInput" data-delta="10">+</button>
     </div>
+    <span>sec rest</span>
   </div>
 
   <button id="startBtn">Start</button>
@@ -185,6 +195,8 @@ function saveConfig() {
     exercisesPerSuperset: document.getElementById('exercisesInput').value,
     restExercise: document.getElementById('restExerciseInput').value,
     restSuperset: document.getElementById('restSupersetInput').value,
+    warmup: document.getElementById('warmupCheckbox').checked,
+    cooldown: document.getElementById('cooldownCheckbox').checked,
   }));
 }
 function loadConfig() {
@@ -195,6 +207,8 @@ function loadConfig() {
   document.getElementById('exercisesInput').value = config.exercisesPerSuperset;
   document.getElementById('restExerciseInput').value = config.restExercise;
   document.getElementById('restSupersetInput').value = config.restSuperset;
+  document.getElementById('warmupCheckbox').checked = !!config.warmup;
+  document.getElementById('cooldownCheckbox').checked = !!config.cooldown;
 }
 function loadLog() {
   const raw = localStorage.getItem('timer.log');
@@ -271,11 +285,12 @@ function nextExerciseParts() {
 function setText(el, text) {
   if (el.textContent !== text) el.textContent = text;
 }
-let lastRestLabel; // tracked separately since setRestLabel builds child nodes, not a plain string
-function setRestLabel(nextLabel) {
-  if (lastRestLabel === nextLabel) return;
-  lastRestLabel = nextLabel;
-  phaseLabel.textContent = 'Rest';
+let lastDividedKey; // tracked separately since setDividedLabel builds child nodes, not a plain string
+function setDividedLabel(prefix, nextLabel) {
+  const key = prefix + '|' + nextLabel;
+  if (lastDividedKey === key) return;
+  lastDividedKey = key;
+  phaseLabel.textContent = prefix;
   const divider = document.createElement('span');
   divider.className = 'rest-divider';
   divider.textContent = ', then ';
@@ -298,23 +313,40 @@ function render() {
   const now = Date.now();
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
 
-  if (state.phase === 'exercise') {
-    lastRestLabel = undefined;
+  if (state.phase === 'warmup') {
+    setDividedLabel('Warm-up', exerciseParts(state.supersetIndex, state.exerciseIndex).label);
+    timerText.textContent = fmtMMSS(elapsedSec);
+    timerDisplay.classList.remove('overtime');
+    timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
+    timerBar.style.background = 'rgba(70, 110, 180, 0.5)';
+    setHidden(mainBtn, false);
+    setText(mainBtn, 'Next');
+  } else if (state.phase === 'exercise') {
+    lastDividedKey = undefined;
     setText(phaseLabel, exerciseParts(state.supersetIndex, state.exerciseIndex).label);
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
     timerBar.style.background = 'rgba(70, 110, 180, 0.5)';
-    setHidden(mainBtn, isLastActionOfWorkout());
+    setHidden(mainBtn, isLastActionOfWorkout() && !state.config.cooldown);
     setText(mainBtn, 'Rest');
-  } else {
+  } else if (state.phase === 'cooldown') {
+    lastDividedKey = undefined;
+    setText(phaseLabel, 'Cool-down');
+    timerText.textContent = fmtMMSS(elapsedSec);
+    timerDisplay.classList.remove('overtime');
+    timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
+    timerBar.style.background = 'rgba(70, 110, 180, 0.5)';
+    setHidden(mainBtn, true);
+  } else { // rest
     const remaining = state.currentRestDefault - elapsedSec;
-    setRestLabel(nextExerciseParts().label);
+    const nextLabel = state.awaitingCooldown ? 'Cool-down' : nextExerciseParts().label;
+    setDividedLabel('Rest', nextLabel);
     timerText.textContent = fmtMMSS(remaining);
     timerDisplay.classList.toggle('overtime', remaining < 0);
     timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
     timerBar.style.background = restBarColor(remaining, state.currentRestDefault);
-    setHidden(mainBtn, isLastActionOfWorkout());
+    setHidden(mainBtn, false);
     setText(mainBtn, 'Next');
   }
 }
@@ -324,17 +356,20 @@ function onStart() {
   const exercisesPerSuperset = parseCount(document.getElementById('exercisesInput').value, 6, 19);
   const restExercise = parseRestSeconds(document.getElementById('restExerciseInput').value, 60, 900);
   const restSuperset = parseRestSeconds(document.getElementById('restSupersetInput').value, 180, 900);
+  const warmup = document.getElementById('warmupCheckbox').checked;
+  const cooldown = document.getElementById('cooldownCheckbox').checked;
 
   const now = Date.now();
   state = {
-    config: { supersets, exercisesPerSuperset, restExercise, restSuperset, exerciseNames: queryExerciseNames },
+    config: { supersets, exercisesPerSuperset, restExercise, restSuperset, exerciseNames: queryExerciseNames, warmup, cooldown },
     supersetIndex: 1,
     exerciseIndex: 1,
-    phase: 'exercise',
+    phase: warmup ? 'warmup' : 'exercise',
     phaseStartEpoch: now,
     sessionStartEpoch: now,
     currentRestDefault: restExercise,
     entries: [],
+    awaitingCooldown: false,
   };
   saveState();
   requestWakeLock();
@@ -345,21 +380,32 @@ function onMainBtn() {
   const now = Date.now();
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
 
-  if (state.phase === 'exercise') {
+  if (state.phase === 'warmup') {
+    state.entries.push({ label: 'Warm-up', seconds: elapsedSec, superset: '', exercise: 'Warm-up' });
+    state.phase = 'exercise';
+    state.phaseStartEpoch = now;
+  } else if (state.phase === 'exercise') {
+    const wasLastAction = isLastActionOfWorkout();
     const parts = exerciseParts(state.supersetIndex, state.exerciseIndex);
     state.entries.push({ label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name });
     state.currentRestDefault = isLastExerciseInSuperset() ? state.config.restSuperset : state.config.restExercise;
     state.phase = 'rest';
     state.phaseStartEpoch = now;
-  } else {
+    state.awaitingCooldown = wasLastAction && state.config.cooldown;
+  } else { // rest
     state.entries.push({ label: 'Rest', seconds: elapsedSec, target: state.currentRestDefault });
-    if (isLastExerciseInSuperset()) {
-      state.supersetIndex += 1;
-      state.exerciseIndex = 1;
+    if (state.awaitingCooldown) {
+      state.phase = 'cooldown';
+      state.awaitingCooldown = false;
     } else {
-      state.exerciseIndex += 1;
+      if (isLastExerciseInSuperset()) {
+        state.supersetIndex += 1;
+        state.exerciseIndex = 1;
+      } else {
+        state.exerciseIndex += 1;
+      }
+      state.phase = 'exercise';
     }
-    state.phase = 'exercise';
     state.phaseStartEpoch = now;
   }
   saveState();
@@ -662,10 +708,17 @@ window.addEventListener('storage', (event) => {
 function onFinish() {
   const now = Date.now();
   const elapsedSec = Math.round((now - state.phaseStartEpoch) / 1000);
-  const parts = state.phase === 'exercise' ? exerciseParts(state.supersetIndex, state.exerciseIndex) : null;
-  const entry = { label: parts ? parts.label : 'Rest', seconds: elapsedSec };
-  if (parts) { entry.superset = parts.superset; entry.exercise = parts.name; }
-  if (state.phase === 'rest') entry.target = state.currentRestDefault;
+  let entry;
+  if (state.phase === 'exercise') {
+    const parts = exerciseParts(state.supersetIndex, state.exerciseIndex);
+    entry = { label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name };
+  } else if (state.phase === 'warmup') {
+    entry = { label: 'Warm-up', seconds: elapsedSec, superset: '', exercise: 'Warm-up' };
+  } else if (state.phase === 'cooldown') {
+    entry = { label: 'Cool-down', seconds: elapsedSec, superset: '', exercise: 'Cool-down' };
+  } else {
+    entry = { label: 'Rest', seconds: elapsedSec, target: state.currentRestDefault };
+  }
   state.entries.push(entry);
 
   logHistory.unshift({
@@ -714,7 +767,7 @@ document.querySelectorAll('.stepper-btn').forEach((btn) => {
   });
 });
 
-document.querySelectorAll('.config-grid input').forEach((input) => {
+document.querySelectorAll('.config-grid input[type="number"]').forEach((input) => {
   input.addEventListener('wheel', (e) => {
     e.preventDefault();
     const step = parseInt(input.step, 10) || 1;
