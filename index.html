@@ -54,6 +54,7 @@
   .config-grid, .timer-block { min-height: 220px; }
   .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
   #phaseLabel { font-size: 2rem; text-align: center; margin-bottom: 4px; }
+  #phaseLabel .rest-arrow { font-size: 70%; }
   #timerDisplay {
     position: relative; overflow: hidden;
     font-size: clamp(2.5rem, 28cqw, 7rem); text-align: center; font-variant-numeric: tabular-nums;
@@ -270,6 +271,17 @@ function nextExerciseParts() {
 function setText(el, text) {
   if (el.textContent !== text) el.textContent = text;
 }
+let lastRestLabel; // tracked separately since setRestLabel builds child nodes, not a plain string
+function setRestLabel(nextLabel) {
+  if (lastRestLabel === nextLabel) return;
+  lastRestLabel = nextLabel;
+  phaseLabel.textContent = 'Rest ';
+  const arrow = document.createElement('span');
+  arrow.className = 'rest-arrow';
+  arrow.textContent = '➡';
+  phaseLabel.appendChild(arrow);
+  phaseLabel.appendChild(document.createTextNode(' ' + nextLabel));
+}
 function setHidden(el, hidden) {
   if (el.hidden !== hidden) el.hidden = hidden;
 }
@@ -287,6 +299,7 @@ function render() {
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
 
   if (state.phase === 'exercise') {
+    lastRestLabel = undefined;
     setText(phaseLabel, exerciseParts(state.supersetIndex, state.exerciseIndex).label);
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
@@ -296,7 +309,7 @@ function render() {
     setText(mainBtn, 'Rest');
   } else {
     const remaining = state.currentRestDefault - elapsedSec;
-    setText(phaseLabel, 'Rest ➡ ' + nextExerciseParts().label);
+    setRestLabel(nextExerciseParts().label);
     timerText.textContent = fmtMMSS(remaining);
     timerDisplay.classList.toggle('overtime', remaining < 0);
     timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
