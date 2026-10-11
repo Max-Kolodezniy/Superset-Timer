@@ -346,8 +346,19 @@ function onMainBtn() {
   render();
 }
 
-document.getElementById('startBtn').addEventListener('click', onStart);
-mainBtn.addEventListener('click', onMainBtn);
+const TAP_GUARD_MS = 400; // ignore a second tap on the same button within this window (common mobile double-tap debounce range: 300-500ms)
+function debounceClick(handler) {
+  let lastCall = 0;
+  return function (...args) {
+    const now = Date.now();
+    if (now - lastCall < TAP_GUARD_MS) return;
+    lastCall = now;
+    handler.apply(this, args);
+  };
+}
+
+document.getElementById('startBtn').addEventListener('click', debounceClick(onStart));
+mainBtn.addEventListener('click', debounceClick(onMainBtn));
 
 function tick() {
   if (state) render();
@@ -652,7 +663,7 @@ function onFinish() {
   renderLog();
 }
 
-finishBtn.addEventListener('click', onFinish);
+finishBtn.addEventListener('click', debounceClick(onFinish));
 
 function onCancel() {
   state = null;
@@ -661,7 +672,7 @@ function onCancel() {
   render();
 }
 
-document.getElementById('cancelBtn').addEventListener('click', onCancel);
+document.getElementById('cancelBtn').addEventListener('click', debounceClick(onCancel));
 
 document.querySelectorAll('.config-grid input').forEach((input) => {
   input.addEventListener('input', saveConfig);
