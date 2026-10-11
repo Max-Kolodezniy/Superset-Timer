@@ -207,8 +207,8 @@ function loadConfig() {
   document.getElementById('exercisesInput').value = config.exercisesPerSuperset;
   document.getElementById('restExerciseInput').value = config.restExercise;
   document.getElementById('restSupersetInput').value = config.restSuperset;
-  document.getElementById('warmupCheckbox').checked = !!config.warmup;
-  document.getElementById('cooldownCheckbox').checked = !!config.cooldown;
+  if ('warmup' in config) document.getElementById('warmupCheckbox').checked = !!config.warmup;
+  if ('cooldown' in config) document.getElementById('cooldownCheckbox').checked = !!config.cooldown;
 }
 function loadLog() {
   const raw = localStorage.getItem('timer.log');
