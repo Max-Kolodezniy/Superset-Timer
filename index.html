@@ -296,7 +296,7 @@ function render() {
     setText(mainBtn, 'Rest');
   } else {
     const remaining = state.currentRestDefault - elapsedSec;
-    setText(phaseLabel, 'Rest ⇾ ' + nextExerciseParts().label);
+    setText(phaseLabel, 'Rest ➡ ' + nextExerciseParts().label);
     timerText.textContent = fmtMMSS(remaining);
     timerDisplay.classList.toggle('overtime', remaining < 0);
     timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
