@@ -267,6 +267,13 @@ function nextExerciseParts() {
     : exerciseParts(state.supersetIndex, state.exerciseIndex + 1);
 }
 
+function setText(el, text) {
+  if (el.textContent !== text) el.textContent = text;
+}
+function setHidden(el, hidden) {
+  if (el.hidden !== hidden) el.hidden = hidden;
+}
+
 function render() {
   if (!state) {
     configScreen.hidden = false;
@@ -280,22 +287,22 @@ function render() {
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
 
   if (state.phase === 'exercise') {
-    phaseLabel.textContent = exerciseParts(state.supersetIndex, state.exerciseIndex).label;
+    setText(phaseLabel, exerciseParts(state.supersetIndex, state.exerciseIndex).label);
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
     timerBar.style.background = 'rgba(70, 110, 180, 0.5)';
-    mainBtn.hidden = isLastActionOfWorkout();
-    mainBtn.textContent = 'Rest';
+    setHidden(mainBtn, isLastActionOfWorkout());
+    setText(mainBtn, 'Rest');
   } else {
     const remaining = state.currentRestDefault - elapsedSec;
-    phaseLabel.textContent = 'Rest ⇾ ' + nextExerciseParts().label;
+    setText(phaseLabel, 'Rest ⇾ ' + nextExerciseParts().label);
     timerText.textContent = fmtMMSS(remaining);
     timerDisplay.classList.toggle('overtime', remaining < 0);
     timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
     timerBar.style.background = restBarColor(remaining, state.currentRestDefault);
-    mainBtn.hidden = isLastActionOfWorkout();
-    mainBtn.textContent = 'Next';
+    setHidden(mainBtn, isLastActionOfWorkout());
+    setText(mainBtn, 'Next');
   }
 }
 
