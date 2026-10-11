@@ -261,6 +261,12 @@ function isLastActionOfWorkout() {
     && state.exerciseIndex === state.config.exercisesPerSuperset;
 }
 
+function nextExerciseParts() {
+  return isLastExerciseInSuperset()
+    ? exerciseParts(state.supersetIndex + 1, 1)
+    : exerciseParts(state.supersetIndex, state.exerciseIndex + 1);
+}
+
 function render() {
   if (!state) {
     configScreen.hidden = false;
@@ -283,7 +289,7 @@ function render() {
     mainBtn.textContent = 'Rest';
   } else {
     const remaining = state.currentRestDefault - elapsedSec;
-    phaseLabel.textContent = 'Rest';
+    phaseLabel.textContent = 'Rest ⇾ ' + nextExerciseParts().label;
     timerText.textContent = fmtMMSS(remaining);
     timerDisplay.classList.toggle('overtime', remaining < 0);
     timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
