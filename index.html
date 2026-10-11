@@ -54,7 +54,7 @@
   .config-grid, .timer-block { min-height: 220px; }
   .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
   #phaseLabel { font-size: 2rem; text-align: center; margin-bottom: 4px; }
-  #phaseLabel .rest-arrow { font-size: 70%; }
+  #phaseLabel .rest-divider { font-size: 70%; color: #888; font-weight: 300; }
   #timerDisplay {
     position: relative; overflow: hidden;
     font-size: clamp(2.5rem, 28cqw, 7rem); text-align: center; font-variant-numeric: tabular-nums;
@@ -275,12 +275,12 @@ let lastRestLabel; // tracked separately since setRestLabel builds child nodes, 
 function setRestLabel(nextLabel) {
   if (lastRestLabel === nextLabel) return;
   lastRestLabel = nextLabel;
-  phaseLabel.textContent = 'Rest ';
-  const arrow = document.createElement('span');
-  arrow.className = 'rest-arrow';
-  arrow.textContent = '➡';
-  phaseLabel.appendChild(arrow);
-  phaseLabel.appendChild(document.createTextNode(' ' + nextLabel));
+  phaseLabel.textContent = 'Rest';
+  const divider = document.createElement('span');
+  divider.className = 'rest-divider';
+  divider.textContent = ', then ';
+  phaseLabel.appendChild(divider);
+  phaseLabel.appendChild(document.createTextNode(nextLabel));
 }
 function setHidden(el, hidden) {
   if (el.hidden !== hidden) el.hidden = hidden;
