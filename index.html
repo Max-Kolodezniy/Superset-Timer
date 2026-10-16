@@ -125,12 +125,14 @@
   body.mode-landscape #sessionScreen {
     display: grid;
     grid-template-columns: 1fr 180px;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: 35px 1fr;
     column-gap: 12px; row-gap: 8px;
   }
-  body.mode-landscape .timer-block { grid-column: 1; grid-row: 1; min-height: 0; margin-bottom: 0; }
-  body.mode-landscape #mainBtn { grid-column: 2; grid-row: 1; margin: 0; width: 100%; height: auto; align-self: start; justify-self: stretch; aspect-ratio: 1; margin-top: 52px; }
-  body.mode-landscape .finish-row { grid-column: 2; grid-row: 2; margin: 0; }
+  body.mode-landscape #phaseLabel { grid-column: 1; grid-row: 1; margin: 0; display: flex; align-items: center; justify-content: flex-start; font-size: 1.3rem; }
+  body.mode-landscape .timer-block { grid-column: 1; grid-row: 2; min-height: 0; margin-bottom: 0; }
+  body.mode-landscape .button-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; height: 100%; }
+  body.mode-landscape .button-stack #mainBtn { flex: 1; margin: 0; width: 100%; height: auto; }
+  body.mode-landscape .finish-row { margin: 0; }
   body.mode-landscape #configScreen {
     display: grid;
     grid-template-columns: 1fr 180px;
@@ -191,17 +193,19 @@
 </section>
 
 <section id="sessionScreen" hidden>
+  <div id="phaseLabel"></div>
   <div class="timer-block">
-    <div id="phaseLabel"></div>
     <div id="timerDisplay">
       <div id="timerBar"></div>
       <span id="timerText">00:00</span>
     </div>
   </div>
-  <button id="mainBtn">Rest</button>
-  <div class="finish-row">
-    <button id="finishBtn">Finish</button>
-    <button id="cancelBtn" aria-label="Cancel workout">✕</button>
+  <div class="button-stack">
+    <button id="mainBtn">Rest</button>
+    <div class="finish-row">
+      <button id="finishBtn">Finish</button>
+      <button id="cancelBtn" aria-label="Cancel workout">✕</button>
+    </div>
   </div>
 </section>
 
