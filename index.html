@@ -80,7 +80,7 @@
     border-radius: 10px; display: flex; align-items: center; justify-content: center;
   }
   .config-grid, .timer-block { min-height: 220px; }
-  .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
+  .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: size; }
   #phaseLabel { font-size: 2rem; text-align: center; margin-bottom: 4px; }
   #phaseLabel .rest-divider { font-size: 70%; color: #888; font-weight: 300; }
   #timerDisplay {
@@ -125,13 +125,14 @@
   body.mode-landscape #sessionScreen {
     display: grid;
     grid-template-columns: 1fr 180px;
-    grid-template-rows: 35px 1fr;
+    grid-template-rows: 35px auto;
     column-gap: 12px; row-gap: 8px;
   }
   body.mode-landscape #phaseLabel { grid-column: 1; grid-row: 1; margin: 0; display: flex; align-items: center; justify-content: flex-start; font-size: 1.3rem; }
-  body.mode-landscape .timer-block { grid-column: 1; grid-row: 2; min-height: 0; margin-bottom: 0; }
-  body.mode-landscape .button-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; height: 100%; }
-  body.mode-landscape .button-stack #mainBtn { flex: 1; margin: 0; width: 100%; height: auto; }
+  body.mode-landscape .timer-block { grid-column: 1; grid-row: 2; min-height: 0; margin-bottom: 0; align-self: stretch; }
+  body.mode-landscape #timerDisplay { font-size: clamp(2.5rem, 55cqh, 10rem); }
+  body.mode-landscape .button-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; }
+  body.mode-landscape .button-stack #mainBtn { flex: none; margin: 0; width: 100%; height: auto; aspect-ratio: 1; }
   body.mode-landscape .finish-row { margin: 0; }
   body.mode-landscape #configScreen {
     display: grid;
