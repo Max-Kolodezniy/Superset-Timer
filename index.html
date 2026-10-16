@@ -16,11 +16,36 @@
     background: #000; color: #eee;
     margin: 0; padding: 16px;
   }
-  #fullscreenBtn {
+  #topRightControls {
     position: fixed; top: 12px; right: 12px; z-index: 10;
+    display: flex; align-items: center; gap: 6px;
+  }
+  #topRightControls button {
     width: auto; margin-top: 0; padding: 6px 10px; font-size: 1.1rem;
     background: #333; color: #eee; opacity: 0.85;
   }
+  #topRightControls button.active { background: #2d6cdf; opacity: 1; }
+  .tray-buttons {
+    display: flex; align-items: center; gap: 6px; overflow: hidden;
+    max-width: 170px; opacity: 1;
+    background: #999; border-radius: 10px; padding: 4px;
+    transition: max-width 0.25s ease, opacity 0.2s ease, margin-right 0.25s ease, padding 0.25s ease;
+  }
+  .tray-buttons.collapsed { max-width: 0; opacity: 0; margin-right: -6px; padding: 4px 0; }
+  #trayToggleBtn {
+    width: 22px; height: 28px; padding: 0; margin-top: 0; flex-shrink: 0;
+    background: #333; color: #eee; opacity: 0.85; font-size: 0.8rem; line-height: 1;
+    clip-path: polygon(40% 0%, 100% 0%, 100% 100%, 40% 100%, 0% 50%);
+  }
+  .orientation-icon { display: block; border: 2px solid currentColor; border-radius: 2px; }
+  #portraitBtn .orientation-icon { width: 11px; height: 16px; }
+  #landscapeBtn .orientation-icon { width: 16px; height: 11px; }
+  .screen-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px;
+  }
+  .screen-dot { width: 5px; height: 5px; border-radius: 50%; border: 1.5px solid currentColor; background: transparent; }
+  #wakeLockToggleBtn.active .screen-dot { background: currentColor; }
   section { margin-bottom: 24px; }
   label { display: block; margin: 12px 0 4px; font-size: 0.9rem; opacity: 0.8; }
   input[type="number"] {
@@ -43,8 +68,8 @@
   .config-checkbox { display: flex; align-items: center; gap: 6px; font-size: 1rem; cursor: pointer; padding: 10px 8px; margin: -10px -8px; }
   .config-checkbox input { width: 18px; height: 18px; cursor: pointer; }
   .config-checkbox:has(input:not(:checked)) span { color: #666; }
-  .warmup-checkbox { grid-column: 1 / 3; justify-self: start; }
-  .cooldown-checkbox { grid-column: 3 / 5; justify-self: end; }
+  .warmup-checkbox { grid-column: 1 / 3; justify-self: start; margin-left: 0; padding-left: 0; }
+  .cooldown-checkbox { grid-column: 3 / 5; justify-self: end; margin-right: 0; padding-right: 0; }
   .stepper-sm { width: 93px; flex-shrink: 0; }
   .stepper-sm .stepper-btn { width: 32px; font-size: 1.2rem; }
   .stepper-sm input[type="number"] { padding: 8px 32px; font-size: 1rem; }
@@ -59,19 +84,22 @@
   }
   #startBtn, #mainBtn { background: #2d6cdf; color: white; margin-top: 24px; }
   #finishBtn { background: #b33; color: white; }
-  #cancelBtn {
-    display: block; width: auto; margin: 12px auto 0; padding: 4px 8px;
-    background: none; color: #888; font-size: 0.85rem;
-    text-decoration: underline; border-radius: 0;
+  .finish-row { display: flex; gap: 8px; margin-top: 12px; }
+  .finish-row #finishBtn { flex: 1; width: auto; margin-top: 0; }
+  .finish-row #cancelBtn {
+    flex-shrink: 0; width: 60px; height: 60px; padding: 0; margin: 0;
+    background: #333; color: #ccc; font-size: 1.3rem;
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
   }
-  .config-grid, .timer-block { min-height: 220px; }
-  .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
+  .config-grid { min-height: 220px; }
+  .timer-block { min-height: 178px; }
+  .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: size; }
   #phaseLabel { font-size: 2rem; text-align: center; margin-bottom: 4px; }
-  #phaseLabel .rest-divider { font-size: 70%; color: #888; font-weight: 300; }
+  #phaseLabel .rest-divider { font-size: 70%; color: #888; font-weight: 300; margin-right: 0.3em; }
   #timerDisplay {
     position: relative; overflow: hidden;
     font-size: clamp(2.5rem, 28cqw, 7rem); text-align: center; font-variant-numeric: tabular-nums;
-    margin-bottom: 4px; padding: 8px 16px; border-radius: 12px;
+    padding: 8px 16px; border-radius: 12px;
   }
   #timerDisplay.overtime { background: #b33; color: white; }
   #timerBar {
@@ -107,11 +135,47 @@
   button.icon-btn-danger { background: #4a2222; padding: 8px 10px; font-size: 1rem; line-height: 1; }
   .log-section-actions { display: flex; gap: 8px; }
   [hidden] { display: none !important; }
+  body.mode-landscape #sessionScreen {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    grid-template-rows: auto 248px;
+    column-gap: 12px; row-gap: 8px;
+  }
+  body.mode-landscape #phaseLabel { grid-column: 1 / 3; grid-row: 1; margin: 0; display: flex; align-items: center; justify-content: center; }
+  body.mode-landscape #sessionScreen > #topRightControls {
+    position: static; grid-column: 2; grid-row: 1; z-index: 1;
+    display: flex; align-items: center; justify-content: flex-end; margin: 0;
+  }
+  body.mode-landscape .timer-block { grid-column: 1; grid-row: 2; min-height: 0; margin-bottom: 0; height: 100%; }
+  body.mode-landscape #timerDisplay {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: clamp(2.5rem, min(27cqw, 92cqh), 14rem);
+  }
+  body.mode-landscape .button-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; height: 100%; }
+  body.mode-landscape .button-stack #mainBtn { flex: none; margin: 0; width: 180px; height: 180px; }
+  body.mode-landscape .finish-row { margin: 0; height: 60px; }
+  body.mode-landscape .finish-row #finishBtn,
+  body.mode-landscape .finish-row #cancelBtn { height: 100%; }
+  body.mode-landscape #configScreen {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    align-items: center;
+    column-gap: 16px;
+  }
+  body.mode-landscape #startBtn { margin: 0; width: 100%; height: auto; align-self: start; justify-self: stretch; aspect-ratio: 1; margin-top: 52px; }
 </style>
 </head>
 <body>
 
-<button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
+<div id="topRightControls">
+  <div class="tray-buttons collapsed" id="trayButtons">
+    <button id="portraitBtn" type="button" aria-label="Portrait mode"><span class="orientation-icon"></span></button>
+    <button id="landscapeBtn" type="button" aria-label="Landscape mode"><span class="orientation-icon"></span></button>
+    <button id="wakeLockToggleBtn" type="button" aria-label="Keep screen on"><span class="screen-icon"><span class="screen-dot"></span></span></button>
+    <button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
+  </div>
+  <button id="trayToggleBtn" type="button" aria-label="Toggle controls tray">‹</button>
+</div>
 
 <section id="configScreen">
   <div class="config-grid">
@@ -155,17 +219,20 @@
 </section>
 
 <section id="sessionScreen" hidden>
+  <div id="phaseLabel"></div>
   <div class="timer-block">
-    <div id="phaseLabel"></div>
     <div id="timerDisplay">
       <div id="timerBar"></div>
       <span id="timerText">00:00</span>
     </div>
   </div>
-  <button id="mainBtn">Rest</button>
-  <button id="finishBtn">Finish</button>
-  <button id="cancelBtn">Cancel</button>
-  <div id="wakeLockStatus" style="text-align:center; font-size:0.8rem; opacity:0.6; margin-top:8px;"></div>
+  <div class="button-stack">
+    <button id="mainBtn">Rest</button>
+    <div class="finish-row">
+      <button id="finishBtn">Finish</button>
+      <button id="cancelBtn" aria-label="Cancel workout">✕</button>
+    </div>
+  </div>
 </section>
 
 <section id="logScreen">
@@ -202,6 +269,7 @@ function saveConfig() {
     restSuperset: document.getElementById('restSupersetInput').value,
     warmup: document.getElementById('warmupCheckbox').checked,
     cooldown: document.getElementById('cooldownCheckbox').checked,
+    keepScreenOn: keepScreenOn,
   }));
 }
 function loadConfig() {
@@ -214,6 +282,7 @@ function loadConfig() {
   document.getElementById('restSupersetInput').value = config.restSuperset;
   if ('warmup' in config) document.getElementById('warmupCheckbox').checked = !!config.warmup;
   if ('cooldown' in config) document.getElementById('cooldownCheckbox').checked = !!config.cooldown;
+  if ('keepScreenOn' in config) keepScreenOn = !!config.keepScreenOn;
 }
 function loadLog() {
   const raw = localStorage.getItem('timer.log');
@@ -222,6 +291,20 @@ function loadLog() {
 
 const configScreen = document.getElementById('configScreen');
 const sessionScreen = document.getElementById('sessionScreen');
+const topRightControls = document.getElementById('topRightControls');
+const trayButtons = document.getElementById('trayButtons');
+const trayToggleBtn = document.getElementById('trayToggleBtn');
+
+trayToggleBtn.addEventListener('click', () => {
+  const open = trayButtons.classList.toggle('collapsed') === false;
+  trayToggleBtn.textContent = open ? '›' : '‹';
+});
+
+function placeTopRightControls() {
+  const belongsInSession = document.body.classList.contains('mode-landscape') && !sessionScreen.hidden;
+  const target = belongsInSession ? sessionScreen : document.body;
+  if (topRightControls.parentElement !== target) target.insertBefore(topRightControls, target.firstChild);
+}
 const phaseLabel = document.getElementById('phaseLabel');
 const timerDisplay = document.getElementById('timerDisplay');
 const timerBar = document.getElementById('timerBar');
@@ -310,10 +393,12 @@ function render() {
   if (!state) {
     configScreen.hidden = false;
     sessionScreen.hidden = true;
+    placeTopRightControls();
     return;
   }
   configScreen.hidden = true;
   sessionScreen.hidden = false;
+  placeTopRightControls();
 
   const now = Date.now();
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
@@ -661,13 +746,11 @@ document.getElementById('clearLogBtn').addEventListener('click', onClearLog);
 let wakeLock = null;
 
 async function requestWakeLock() {
-  const statusEl = document.getElementById('wakeLockStatus');
+  if (!keepScreenOn) return;
   try {
     wakeLock = await navigator.wakeLock.request('screen');
-    if (statusEl) statusEl.textContent = 'Screen: kept on';
   } catch (e) {
-    // Wake Lock unsupported or denied — workout still works, just show the user why.
-    if (statusEl) statusEl.textContent = 'Screen: may sleep (wake lock unavailable)';
+    // Wake Lock unsupported or denied — workout still works without it.
   }
 }
 
@@ -676,12 +759,54 @@ function releaseWakeLock() {
     wakeLock.release();
     wakeLock = null;
   }
-  const statusEl = document.getElementById('wakeLockStatus');
-  if (statusEl) statusEl.textContent = '';
 }
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && state) requestWakeLock();
+});
+
+const portraitBtn = document.getElementById('portraitBtn');
+const landscapeBtn = document.getElementById('landscapeBtn');
+
+function detectOrientationMode() {
+  return window.innerWidth > window.innerHeight ? 'landscape' : 'portrait';
+}
+
+function applyOrientationMode(mode) {
+  document.body.classList.toggle('mode-landscape', mode === 'landscape');
+  document.body.classList.toggle('mode-portrait', mode === 'portrait');
+  portraitBtn.classList.toggle('active', mode === 'portrait');
+  landscapeBtn.classList.toggle('active', mode === 'landscape');
+  placeTopRightControls();
+}
+
+function setOrientationMode(mode) {
+  localStorage.setItem('timer.orientationMode', mode);
+  applyOrientationMode(mode);
+}
+
+function loadOrientationMode() {
+  const saved = localStorage.getItem('timer.orientationMode');
+  return (saved === 'portrait' || saved === 'landscape') ? saved : detectOrientationMode();
+}
+
+portraitBtn.addEventListener('click', () => setOrientationMode('portrait'));
+landscapeBtn.addEventListener('click', () => setOrientationMode('landscape'));
+applyOrientationMode(loadOrientationMode());
+
+let keepScreenOn = true;
+const wakeLockToggleBtn = document.getElementById('wakeLockToggleBtn');
+
+function applyWakeLockSetting(enabled) {
+  wakeLockToggleBtn.classList.toggle('active', enabled);
+  if (enabled) { if (state) requestWakeLock(); }
+  else releaseWakeLock();
+}
+
+wakeLockToggleBtn.addEventListener('click', () => {
+  keepScreenOn = !keepScreenOn;
+  applyWakeLockSetting(keepScreenOn);
+  saveConfig();
 });
 
 function toggleFullscreen() {
@@ -744,6 +869,7 @@ function onFinish() {
 finishBtn.addEventListener('click', debounceClick(onFinish));
 
 function onCancel() {
+  if (!confirm('Cancel this workout? It will not be logged.')) return;
   state = null;
   releaseWakeLock();
   saveState();
@@ -793,6 +919,7 @@ function applyQueryExercises() {
 }
 
 loadConfig();
+wakeLockToggleBtn.classList.toggle('active', keepScreenOn);
 applyQueryExercises();
 state = loadState();
 logHistory = loadLog();
