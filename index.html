@@ -129,7 +129,7 @@
     column-gap: 12px; row-gap: 8px;
   }
   body.mode-landscape .timer-block { grid-column: 1; grid-row: 1; min-height: 0; margin-bottom: 0; }
-  body.mode-landscape #mainBtn { grid-column: 2; grid-row: 1; margin: 0; height: auto; align-self: stretch; margin-top: 52px; }
+  body.mode-landscape #mainBtn { grid-column: 2; grid-row: 1; margin: 0; width: auto; height: auto; align-self: stretch; justify-self: center; aspect-ratio: 1; margin-top: 52px; }
   body.mode-landscape .finish-row { grid-column: 2; grid-row: 2; margin: 0; }
   body.mode-landscape #configScreen {
     display: grid;
@@ -822,6 +822,7 @@ function onFinish() {
 finishBtn.addEventListener('click', debounceClick(onFinish));
 
 function onCancel() {
+  if (!confirm('Cancel this workout? It will not be logged.')) return;
   state = null;
   releaseWakeLock();
   saveState();
