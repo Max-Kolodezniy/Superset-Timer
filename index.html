@@ -28,6 +28,12 @@
   .orientation-icon { display: block; border: 2px solid currentColor; border-radius: 2px; }
   #portraitBtn .orientation-icon { width: 11px; height: 16px; }
   #landscapeBtn .orientation-icon { width: 16px; height: 11px; }
+  .screen-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px; border: 2px solid currentColor; border-radius: 3px;
+  }
+  .screen-dot { width: 5px; height: 5px; border-radius: 50%; border: 1.5px solid currentColor; background: transparent; }
+  #wakeLockToggleBtn.active .screen-dot { background: currentColor; }
   section { margin-bottom: 24px; }
   label { display: block; margin: 12px 0 4px; font-size: 0.9rem; opacity: 0.8; }
   input[type="number"] {
@@ -123,7 +129,6 @@
   body.mode-landscape .timer-block { grid-column: 1; grid-row: 1; min-height: 0; margin-bottom: 0; }
   body.mode-landscape #mainBtn { grid-column: 2; grid-row: 1; margin: 0; height: auto; align-self: stretch; margin-top: 52px; }
   body.mode-landscape .session-footer { grid-column: 1; grid-row: 2; display: flex; align-items: center; gap: 12px; }
-  body.mode-landscape .session-footer #wakeLockStatus { margin-top: 0; }
   body.mode-landscape #finishBtn { grid-column: 2; grid-row: 2; margin: 0; }
   body.mode-landscape #configScreen {
     display: grid;
@@ -139,6 +144,7 @@
 <div id="topRightControls">
   <button id="portraitBtn" type="button" aria-label="Portrait mode"><span class="orientation-icon"></span></button>
   <button id="landscapeBtn" type="button" aria-label="Landscape mode"><span class="orientation-icon"></span></button>
+  <button id="wakeLockToggleBtn" type="button" aria-label="Keep screen on"><span class="screen-icon"><span class="screen-dot"></span></span></button>
   <button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
 </div>
 
@@ -195,7 +201,6 @@
   <button id="finishBtn">Finish</button>
   <div class="session-footer">
     <button id="cancelBtn">Cancel</button>
-    <div id="wakeLockStatus" style="text-align:center; font-size:0.8rem; opacity:0.6; margin-top:8px;"></div>
   </div>
 </section>
 
@@ -233,6 +238,7 @@ function saveConfig() {
     restSuperset: document.getElementById('restSupersetInput').value,
     warmup: document.getElementById('warmupCheckbox').checked,
     cooldown: document.getElementById('cooldownCheckbox').checked,
+    keepScreenOn: keepScreenOn,
   }));
 }
 function loadConfig() {
@@ -245,6 +251,7 @@ function loadConfig() {
   document.getElementById('restSupersetInput').value = config.restSuperset;
   if ('warmup' in config) document.getElementById('warmupCheckbox').checked = !!config.warmup;
   if ('cooldown' in config) document.getElementById('cooldownCheckbox').checked = !!config.cooldown;
+  if ('keepScreenOn' in config) keepScreenOn = !!config.keepScreenOn;
 }
 function loadLog() {
   const raw = localStorage.getItem('timer.log');
@@ -692,13 +699,11 @@ document.getElementById('clearLogBtn').addEventListener('click', onClearLog);
 let wakeLock = null;
 
 async function requestWakeLock() {
-  const statusEl = document.getElementById('wakeLockStatus');
+  if (!keepScreenOn) return;
   try {
     wakeLock = await navigator.wakeLock.request('screen');
-    if (statusEl) statusEl.textContent = 'Screen: kept on';
   } catch (e) {
-    // Wake Lock unsupported or denied — workout still works, just show the user why.
-    if (statusEl) statusEl.textContent = 'Screen: may sleep (wake lock unavailable)';
+    // Wake Lock unsupported or denied — workout still works without it.
   }
 }
 
@@ -707,8 +712,6 @@ function releaseWakeLock() {
     wakeLock.release();
     wakeLock = null;
   }
-  const statusEl = document.getElementById('wakeLockStatus');
-  if (statusEl) statusEl.textContent = '';
 }
 
 document.addEventListener('visibilitychange', () => {
@@ -742,6 +745,21 @@ function loadOrientationMode() {
 portraitBtn.addEventListener('click', () => setOrientationMode('portrait'));
 landscapeBtn.addEventListener('click', () => setOrientationMode('landscape'));
 applyOrientationMode(loadOrientationMode());
+
+let keepScreenOn = true;
+const wakeLockToggleBtn = document.getElementById('wakeLockToggleBtn');
+
+function applyWakeLockSetting(enabled) {
+  wakeLockToggleBtn.classList.toggle('active', enabled);
+  if (enabled) { if (state) requestWakeLock(); }
+  else releaseWakeLock();
+}
+
+wakeLockToggleBtn.addEventListener('click', () => {
+  keepScreenOn = !keepScreenOn;
+  applyWakeLockSetting(keepScreenOn);
+  saveConfig();
+});
 
 function toggleFullscreen() {
   if (document.fullscreenElement) {
@@ -852,6 +870,7 @@ function applyQueryExercises() {
 }
 
 loadConfig();
+wakeLockToggleBtn.classList.toggle('active', keepScreenOn);
 applyQueryExercises();
 state = loadState();
 logHistory = loadLog();
