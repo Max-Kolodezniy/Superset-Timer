@@ -140,13 +140,16 @@
     grid-template-rows: auto 248px;
     column-gap: 12px; row-gap: 8px;
   }
-  body.mode-landscape #phaseLabel { grid-column: 1; grid-row: 1; margin: 0; display: flex; align-items: center; justify-content: flex-start; font-size: 1.3rem; }
+  body.mode-landscape #phaseLabel { grid-column: 1; grid-row: 1; margin: 0; display: flex; align-items: center; justify-content: flex-start; }
   body.mode-landscape #sessionScreen > #topRightControls {
     position: static; grid-column: 2; grid-row: 1;
     display: flex; align-items: center; justify-content: flex-end; margin: 0;
   }
   body.mode-landscape .timer-block { grid-column: 1; grid-row: 2; min-height: 0; margin-bottom: 0; height: 100%; }
-  body.mode-landscape #timerDisplay { font-size: clamp(2.5rem, 55cqh, 10rem); }
+  body.mode-landscape #timerDisplay {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: clamp(2.5rem, 55cqh, 10rem);
+  }
   body.mode-landscape .button-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; height: 100%; }
   body.mode-landscape .button-stack #mainBtn { flex: none; margin: 0; width: 180px; height: 180px; }
   body.mode-landscape .finish-row { margin: 0; height: 60px; }
