@@ -18,13 +18,24 @@
   }
   #topRightControls {
     position: fixed; top: 12px; right: 12px; z-index: 10;
-    display: flex; gap: 6px;
+    display: flex; align-items: center; gap: 6px;
   }
   #topRightControls button {
     width: auto; margin-top: 0; padding: 6px 10px; font-size: 1.1rem;
     background: #333; color: #eee; opacity: 0.85;
   }
   #topRightControls button.active { background: #2d6cdf; opacity: 1; }
+  .tray-buttons {
+    display: flex; align-items: center; gap: 6px; overflow: hidden;
+    max-width: 300px; opacity: 1;
+    transition: max-width 0.25s ease, opacity 0.2s ease, margin-right 0.25s ease;
+  }
+  .tray-buttons.collapsed { max-width: 0; opacity: 0; margin-right: -6px; }
+  #trayToggleBtn {
+    width: 22px; height: 28px; padding: 0; margin-top: 0; flex-shrink: 0;
+    background: #333; color: #eee; opacity: 0.85; font-size: 0.8rem; line-height: 1;
+    clip-path: polygon(30% 0%, 100% 0%, 100% 100%, 0% 100%);
+  }
   .orientation-icon { display: block; border: 2px solid currentColor; border-radius: 2px; }
   #portraitBtn .orientation-icon { width: 11px; height: 16px; }
   #landscapeBtn .orientation-icon { width: 16px; height: 11px; }
@@ -153,10 +164,13 @@
 <body>
 
 <div id="topRightControls">
-  <button id="portraitBtn" type="button" aria-label="Portrait mode"><span class="orientation-icon"></span></button>
-  <button id="landscapeBtn" type="button" aria-label="Landscape mode"><span class="orientation-icon"></span></button>
-  <button id="wakeLockToggleBtn" type="button" aria-label="Keep screen on"><span class="screen-icon"><span class="screen-dot"></span></span></button>
-  <button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
+  <div class="tray-buttons collapsed" id="trayButtons">
+    <button id="portraitBtn" type="button" aria-label="Portrait mode"><span class="orientation-icon"></span></button>
+    <button id="landscapeBtn" type="button" aria-label="Landscape mode"><span class="orientation-icon"></span></button>
+    <button id="wakeLockToggleBtn" type="button" aria-label="Keep screen on"><span class="screen-icon"><span class="screen-dot"></span></span></button>
+    <button id="fullscreenBtn" type="button" aria-label="Toggle fullscreen">⛶</button>
+  </div>
+  <button id="trayToggleBtn" type="button" aria-label="Toggle controls tray">‹</button>
 </div>
 
 <section id="configScreen">
@@ -274,6 +288,13 @@ function loadLog() {
 const configScreen = document.getElementById('configScreen');
 const sessionScreen = document.getElementById('sessionScreen');
 const topRightControls = document.getElementById('topRightControls');
+const trayButtons = document.getElementById('trayButtons');
+const trayToggleBtn = document.getElementById('trayToggleBtn');
+
+trayToggleBtn.addEventListener('click', () => {
+  const open = trayButtons.classList.toggle('collapsed') === false;
+  trayToggleBtn.textContent = open ? '›' : '‹';
+});
 
 function placeTopRightControls() {
   const belongsInSession = document.body.classList.contains('mode-landscape') && !sessionScreen.hidden;
