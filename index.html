@@ -72,10 +72,12 @@
   }
   #startBtn, #mainBtn { background: #2d6cdf; color: white; margin-top: 24px; }
   #finishBtn { background: #b33; color: white; }
-  #cancelBtn {
-    display: block; width: auto; margin: 12px auto 0; padding: 4px 8px;
-    background: none; color: #888; font-size: 0.85rem;
-    text-decoration: underline; border-radius: 0;
+  .finish-row { display: flex; gap: 8px; margin-top: 12px; }
+  .finish-row #finishBtn { flex: 1; width: auto; margin-top: 0; }
+  .finish-row #cancelBtn {
+    flex-shrink: 0; aspect-ratio: 1; width: auto; padding: 0; margin: 0;
+    background: #333; color: #ccc; font-size: 1.3rem;
+    border-radius: 10px; display: flex; align-items: center; justify-content: center;
   }
   .config-grid, .timer-block { min-height: 220px; }
   .timer-block { display: flex; flex-direction: column; justify-content: center; container-type: inline-size; }
@@ -122,14 +124,13 @@
   [hidden] { display: none !important; }
   body.mode-landscape #sessionScreen {
     display: grid;
-    grid-template-columns: 1fr 140px;
+    grid-template-columns: 1fr 180px;
     grid-template-rows: 1fr auto;
     column-gap: 12px; row-gap: 8px;
   }
   body.mode-landscape .timer-block { grid-column: 1; grid-row: 1; min-height: 0; margin-bottom: 0; }
   body.mode-landscape #mainBtn { grid-column: 2; grid-row: 1; margin: 0; height: auto; align-self: stretch; margin-top: 52px; }
-  body.mode-landscape .session-footer { grid-column: 1; grid-row: 2; display: flex; align-items: center; gap: 12px; }
-  body.mode-landscape #finishBtn { grid-column: 2; grid-row: 2; margin: 0; }
+  body.mode-landscape .finish-row { grid-column: 2; grid-row: 2; margin: 0; }
   body.mode-landscape #configScreen {
     display: grid;
     grid-template-columns: 1fr 160px;
@@ -198,9 +199,9 @@
     </div>
   </div>
   <button id="mainBtn">Rest</button>
-  <button id="finishBtn">Finish</button>
-  <div class="session-footer">
-    <button id="cancelBtn">Cancel</button>
+  <div class="finish-row">
+    <button id="finishBtn">Finish</button>
+    <button id="cancelBtn" aria-label="Cancel workout">✕</button>
   </div>
 </section>
 
