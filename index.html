@@ -125,15 +125,21 @@
   body.mode-landscape #sessionScreen {
     display: grid;
     grid-template-columns: 1fr 180px;
-    grid-template-rows: 35px auto;
+    grid-template-rows: auto 248px;
     column-gap: 12px; row-gap: 8px;
   }
   body.mode-landscape #phaseLabel { grid-column: 1; grid-row: 1; margin: 0; display: flex; align-items: center; justify-content: flex-start; font-size: 1.3rem; }
-  body.mode-landscape .timer-block { grid-column: 1; grid-row: 2; min-height: 0; margin-bottom: 0; align-self: stretch; }
+  body.mode-landscape #sessionScreen > #topRightControls {
+    position: static; grid-column: 2; grid-row: 1;
+    display: flex; align-items: center; justify-content: flex-end; margin: 0;
+  }
+  body.mode-landscape .timer-block { grid-column: 1; grid-row: 2; min-height: 0; margin-bottom: 0; height: 100%; }
   body.mode-landscape #timerDisplay { font-size: clamp(2.5rem, 55cqh, 10rem); }
-  body.mode-landscape .button-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; }
-  body.mode-landscape .button-stack #mainBtn { flex: none; margin: 0; width: 100%; height: auto; aspect-ratio: 1; }
-  body.mode-landscape .finish-row { margin: 0; }
+  body.mode-landscape .button-stack { grid-column: 2; grid-row: 2; display: flex; flex-direction: column; gap: 8px; height: 100%; }
+  body.mode-landscape .button-stack #mainBtn { flex: none; margin: 0; width: 180px; height: 180px; }
+  body.mode-landscape .finish-row { margin: 0; height: 60px; }
+  body.mode-landscape .finish-row #finishBtn,
+  body.mode-landscape .finish-row #cancelBtn { height: 100%; }
   body.mode-landscape #configScreen {
     display: grid;
     grid-template-columns: 1fr 180px;
@@ -266,6 +272,13 @@ function loadLog() {
 
 const configScreen = document.getElementById('configScreen');
 const sessionScreen = document.getElementById('sessionScreen');
+const topRightControls = document.getElementById('topRightControls');
+
+function placeTopRightControls() {
+  const belongsInSession = document.body.classList.contains('mode-landscape') && !sessionScreen.hidden;
+  const target = belongsInSession ? sessionScreen : document.body;
+  if (topRightControls.parentElement !== target) target.insertBefore(topRightControls, target.firstChild);
+}
 const phaseLabel = document.getElementById('phaseLabel');
 const timerDisplay = document.getElementById('timerDisplay');
 const timerBar = document.getElementById('timerBar');
@@ -354,10 +367,12 @@ function render() {
   if (!state) {
     configScreen.hidden = false;
     sessionScreen.hidden = true;
+    placeTopRightControls();
     return;
   }
   configScreen.hidden = true;
   sessionScreen.hidden = false;
+  placeTopRightControls();
 
   const now = Date.now();
   const elapsedSec = (now - state.phaseStartEpoch) / 1000;
@@ -736,6 +751,7 @@ function applyOrientationMode(mode) {
   document.body.classList.toggle('mode-portrait', mode === 'portrait');
   portraitBtn.classList.toggle('active', mode === 'portrait');
   landscapeBtn.classList.toggle('active', mode === 'landscape');
+  placeTopRightControls();
 }
 
 function setOrientationMode(mode) {
