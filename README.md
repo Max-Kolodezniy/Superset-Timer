@@ -23,7 +23,10 @@ Don't lose any data: it stays on your device until you delete it. No Cloud sync,
 - **Export as .md** — dumps the full log history to a downloadable Markdown file, newest first.
 - **Timeline visualization** — each log entry's header renders a background stripe of the whole session: blue for exercise, green for rest, red for any rest that ran over its target ([example](https://max-kolodezniy.github.io/Superset-Timer/docs/interface/1%20-%20configuration.jpg)). Hover a segment for its label and duration.
 - **Stamina bar** — the live timer digits sit over a fill bar: blue growing over 60s during exercise, green-to-red during rest as it approaches the end of the rest window.
-- **Fullscreen toggle** and **Wake Lock** (keeps the screen on during a session, re-acquired automatically if the tab regains focus).
+- **Warm-up / Cool-down** — optional extra phases (checkboxes on the config screen, on by default). Warm-up opens the session before exercise 1, no rest after it. Cool-down adds a final rest-then-cooldown step after the last exercise, so Finish isn't the only option right after your last set.
+- **Portrait / Landscape mode** — icon toggle in the top-right tray, persisted and auto-detected from window dimensions when nothing's saved. Landscape rearranges both the config and session screens into a 2-column layout (label/timer on the left, Start/Next/Finish/Cancel on the right) sized to fit wide, short screens without scrolling.
+- **Collapsible controls tray** — Portrait/Landscape/Wake-lock/Fullscreen live in a slide-out tray (small flag-shaped toggle, top-right corner) instead of cluttering the corner permanently.
+- **Fullscreen toggle** and **Wake Lock toggle** (keeps the screen on during a session; now a tap target in the tray instead of always-on, default on, remembered across visits, re-acquired automatically if the tab regains focus).
 - **Persistent & resumable** — session state, log history, and config are all kept in `localStorage`. Reloading mid-workout resumes the exact phase and elapsed/remaining time from a stored timestamp, not a paused counter. Multiple tabs stay in sync.
 - **OLED-friendly** — pure black background.
 

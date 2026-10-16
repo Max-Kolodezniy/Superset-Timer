@@ -27,10 +27,11 @@
   #topRightControls button.active { background: #2d6cdf; opacity: 1; }
   .tray-buttons {
     display: flex; align-items: center; gap: 6px; overflow: hidden;
-    max-width: 300px; opacity: 1;
-    transition: max-width 0.25s ease, opacity 0.2s ease, margin-right 0.25s ease;
+    max-width: 170px; opacity: 1;
+    background: #999; border-radius: 10px; padding: 4px;
+    transition: max-width 0.25s ease, opacity 0.2s ease, margin-right 0.25s ease, padding 0.25s ease;
   }
-  .tray-buttons.collapsed { max-width: 0; opacity: 0; margin-right: -6px; }
+  .tray-buttons.collapsed { max-width: 0; opacity: 0; margin-right: -6px; padding: 4px 0; }
   #trayToggleBtn {
     width: 22px; height: 28px; padding: 0; margin-top: 0; flex-shrink: 0;
     background: #333; color: #eee; opacity: 0.85; font-size: 0.8rem; line-height: 1;
