@@ -385,10 +385,12 @@ function appendBadge(parent, text) {
 }
 
 function appendExerciseParts(parent, parts) {
-  parent.appendChild(document.createTextNode(parts.superset + ' : '));
-  appendBadge(parent, parts.name);
+  appendBadge(parent, parts.superset + ' : ' + parts.name);
   if (parts.plan) {
-    parent.appendChild(document.createTextNode(' - '));
+    const divider = document.createElement('span');
+    divider.className = 'rest-divider';
+    divider.textContent = '»';
+    parent.appendChild(divider);
     appendBadge(parent, parts.plan);
   }
 }
