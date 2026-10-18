@@ -352,7 +352,10 @@ function exerciseParts(supersetIndex, exerciseIndex) {
   const custom = names && names[exerciseIndex - 1];
   const name = custom || ('Exercise ' + exerciseIndex);
   const superset = 'S' + supersetIndex;
-  return { superset, name, label: superset + ' : ' + name };
+  const plans = state && state.config && state.config.plans;
+  const plan = plans && plans[supersetIndex] && plans[supersetIndex][exerciseIndex];
+  const label = superset + ' : ' + name + (plan ? ' - ' + plan : '');
+  return { superset, name, plan, label };
 }
 
 function isLastExerciseInSuperset() {
@@ -451,7 +454,7 @@ function onStart() {
 
   const now = Date.now();
   state = {
-    config: { supersets, exercisesPerSuperset, restExercise, restSuperset, exerciseNames: queryExerciseNames, warmup, cooldown },
+    config: { supersets, exercisesPerSuperset, restExercise, restSuperset, exerciseNames: queryExerciseNames, plans: queryPlans, warmup, cooldown },
     supersetIndex: 1,
     exerciseIndex: 1,
     phase: warmup ? 'warmup' : 'exercise',
@@ -918,9 +921,26 @@ function applyQueryExercises() {
   exercisesInput.value = queryExerciseNames.length;
 }
 
+let queryPlans = null;
+function applyQueryPlans() {
+  const plans = {};
+  let found = false;
+  for (const [key, value] of new URLSearchParams(window.location.search)) {
+    const match = /^plan\[(\d+)\]\[(\d+)\]$/.exec(key);
+    if (!match || !value) continue;
+    found = true;
+    const supersetIndex = parseInt(match[1], 10);
+    const exerciseIndex = parseInt(match[2], 10);
+    if (!plans[supersetIndex]) plans[supersetIndex] = {};
+    plans[supersetIndex][exerciseIndex] = value;
+  }
+  if (found) queryPlans = plans;
+}
+
 loadConfig();
 wakeLockToggleBtn.classList.toggle('active', keepScreenOn);
 applyQueryExercises();
+applyQueryPlans();
 state = loadState();
 logHistory = loadLog();
 if (state) requestWakeLock();
