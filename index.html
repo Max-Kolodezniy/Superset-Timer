@@ -480,7 +480,7 @@ function onMainBtn() {
   } else if (state.phase === 'exercise') {
     const wasLastAction = isLastActionOfWorkout();
     const parts = exerciseParts(state.supersetIndex, state.exerciseIndex);
-    state.entries.push({ label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name });
+    state.entries.push({ label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name, plan: parts.plan || '' });
     state.currentRestDefault = isLastExerciseInSuperset() ? state.config.restSuperset : state.config.restExercise;
     state.phase = 'rest';
     state.phaseStartEpoch = now;
@@ -555,14 +555,14 @@ function sessionRows(session) {
       if (rows.length) rows[rows.length - 1].rest = fmtMMSS(e.seconds);
       return;
     }
-    rows.push({ superset: e.superset, exercise: e.exercise, time: fmtMMSS(e.seconds), rest: '' });
+    rows.push({ superset: e.superset, exercise: e.exercise, plan: e.plan || '', time: fmtMMSS(e.seconds), rest: '' });
   });
   return rows;
 }
 
 function buildSessionBody(session) {
-  const header = '| S# | Exercise | Time (mm:ss) | Rest (mm:ss) |\n|---|---|---|---|';
-  const body = sessionRows(session).map(r => `| ${r.superset} | ${r.exercise} | ${r.time} | ${r.rest} |`).join('\n');
+  const header = '| S# | Exercise | Plan | Time (mm:ss) | Rest (mm:ss) |\n|---|---|---|---|---|';
+  const body = sessionRows(session).map(r => `| ${r.superset} | ${r.exercise} | ${r.plan} | ${r.time} | ${r.rest} |`).join('\n');
   return header + '\n' + body;
 }
 
@@ -575,6 +575,7 @@ function buildSessionTable(session) {
   [
     { text: 'S#' },
     { text: 'Exercise' },
+    { text: 'Plan', className: 'col-plan' },
     { text: 'Time', unit: '(mm:ss)', className: 'col-time' },
     { text: 'Rest', unit: '(mm:ss)', className: 'col-rest' },
   ].forEach((col) => {
@@ -597,6 +598,7 @@ function buildSessionTable(session) {
     [
       { text: r.superset },
       { text: r.exercise },
+      { text: r.plan, className: 'col-plan' },
       { text: r.time, className: 'col-time' },
       { text: r.rest, className: 'col-rest' },
     ].forEach((col) => {
@@ -844,7 +846,7 @@ function onFinish() {
   let entry;
   if (state.phase === 'exercise') {
     const parts = exerciseParts(state.supersetIndex, state.exerciseIndex);
-    entry = { label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name };
+    entry = { label: parts.label, seconds: elapsedSec, superset: parts.superset, exercise: parts.name, plan: parts.plan || '' };
   } else if (state.phase === 'warmup') {
     entry = { label: 'Warm-up', seconds: elapsedSec, superset: '', exercise: 'Warm-up' };
   } else if (state.phase === 'cooldown') {
