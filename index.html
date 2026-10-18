@@ -397,19 +397,18 @@ function appendExerciseParts(parent, parts) {
 
 let lastDividedKey; // tracked separately since setDividedLabel builds child nodes, not a plain string
 let lastExerciseLabelKey;
-function setDividedLabel(prefix, prefixIsBadge, nextParts) {
+function setDividedLabel(prefix, nextParts) {
   const key = prefix + '|' + nextParts.label;
   if (lastDividedKey === key) return;
   lastDividedKey = key;
   phaseLabel.textContent = '';
-  if (prefixIsBadge) appendBadge(phaseLabel, prefix);
-  else phaseLabel.appendChild(document.createTextNode(prefix));
+  appendBadge(phaseLabel, prefix);
   const divider = document.createElement('span');
   divider.className = 'rest-divider';
   divider.textContent = '»';
   phaseLabel.appendChild(divider);
   if (nextParts.name) appendExerciseParts(phaseLabel, nextParts);
-  else phaseLabel.appendChild(document.createTextNode(nextParts.label));
+  else appendBadge(phaseLabel, nextParts.label);
 }
 function setHidden(el, hidden) {
   if (el.hidden !== hidden) el.hidden = hidden;
@@ -431,7 +430,7 @@ function render() {
 
   if (state.phase === 'warmup') {
     lastExerciseLabelKey = undefined;
-    setDividedLabel('Warm-up', false, exerciseParts(state.supersetIndex, state.exerciseIndex));
+    setDividedLabel('Warm-up', exerciseParts(state.supersetIndex, state.exerciseIndex));
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
@@ -454,8 +453,11 @@ function render() {
     setText(mainBtn, 'Rest');
   } else if (state.phase === 'cooldown') {
     lastDividedKey = undefined;
-    lastExerciseLabelKey = undefined;
-    setText(phaseLabel, 'Cool-down');
+    if (lastExerciseLabelKey !== 'Cool-down') {
+      lastExerciseLabelKey = 'Cool-down';
+      phaseLabel.textContent = '';
+      appendBadge(phaseLabel, 'Cool-down');
+    }
     timerText.textContent = fmtMMSS(elapsedSec);
     timerDisplay.classList.remove('overtime');
     timerBar.style.width = Math.min(elapsedSec / 60, 1) * 100 + '%';
@@ -465,7 +467,7 @@ function render() {
     lastExerciseLabelKey = undefined;
     const remaining = state.currentRestDefault - elapsedSec;
     const nextParts = state.awaitingCooldown ? { label: 'Cool-down' } : nextExerciseParts();
-    setDividedLabel('Rest', true, nextParts);
+    setDividedLabel('Rest', nextParts);
     timerText.textContent = fmtMMSS(remaining);
     timerDisplay.classList.toggle('overtime', remaining < 0);
     timerBar.style.width = Math.max(0, Math.min(remaining / state.currentRestDefault, 1)) * 100 + '%';
